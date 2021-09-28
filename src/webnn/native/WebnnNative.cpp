@@ -76,6 +76,9 @@ namespace webnn::native {
     namespace mlas {
         ContextBase* Create();
     }
+    namespace nnapi {
+        ContextBase* Create(MLContextOptions const* options);
+    }
 
     const WebnnProcTable& GetProcsAutogen();
 

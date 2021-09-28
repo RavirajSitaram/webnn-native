@@ -15,88 +15,92 @@
 #ifndef WEBNN_NATIVE_NNAPI_UTILS_H_
 #define WEBNN_NATIVE_NNAPI_UTILS_H_
 #include <functional>
-#include <iostream>
-#include <limits>
 #include <numeric>
 
-#include "webnn/native/Error.h"
-#include "webnn/native/Graph.h"
-#include "webnn/native/Operand.h"
-#include "webnn/native/Operator.h"
+#include "webnn_native/Error.h"
+#include "webnn_native/Graph.h"
+#include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 
 #include "NeuralNetworksTypes.h"
 #include "nnapi_implementation.h"
-#include "webnn/native/nnapi/ErrorNnapi.h"
+#include "webnn_native/nnapi/ErrorNnapi.h"
 
-namespace webnn::native::nnapi {
+namespace webnn_native { namespace nnapi {
 
     struct NodeInfo {
-        wnn::OperandType type;
+        int fd;
+        ANeuralNetworksMemory* mem;
+        ml::OperandType type;
         std::vector<uint32_t> dimensions;
         std::string name;
         uint32_t opIndex;
 
-        NodeInfo() : opIndex(INT32_MAX) {
-        }
-
-        size_t getDimsSize() {
-            return std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
-                                   std::multiplies<size_t>());
+        NodeInfo() {
+            fd = -1;
+            mem = nullptr;
         }
 
         size_t GetByteCount() {
             size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
                                            std::multiplies<size_t>());
+
             switch (type) {
-                case wnn::OperandType::Float32:
-                case wnn::OperandType::Uint32:
-                case wnn::OperandType::Int32:
+                case ml::OperandType::Float32:
+                case ml::OperandType::Uint32:
+                case ml::OperandType::Int32:
                     count *= 4;
                     break;
-                case wnn::OperandType::Float16:
+                case ml::OperandType::Float16:
                     count *= 2;
                     break;
                 default:
                     UNREACHABLE();
             }
+
             return count;
         }
     };
 
-    inline int32_t ConvertToNnapiType(wnn::OperandType type) {
+    inline int32_t ConvertToNnapiType(ml::OperandType type) {
         int32_t nnapiType;
+
         switch (type) {
-            case wnn::OperandType::Float32:
+            case ml::OperandType::Float32:
                 nnapiType = ANEURALNETWORKS_TENSOR_FLOAT32;
                 break;
-            case wnn::OperandType::Int32:
+            case ml::OperandType::Int32:
                 nnapiType = ANEURALNETWORKS_TENSOR_INT32;
                 break;
-            case wnn::OperandType::Float16:
+            case ml::OperandType::Float16:
                 nnapiType = ANEURALNETWORKS_TENSOR_FLOAT16;
                 break;
-            case wnn::OperandType::Uint32:
+            case ml::OperandType::Uint32:
                 nnapiType = ANEURALNETWORKS_UINT32;
                 break;
             default:
                 UNREACHABLE();
         }
+
         return nnapiType;
     }
 
-    inline MaybeError GetTensorDesc(const std::shared_ptr<NodeInfo>& node,
-                                    ANeuralNetworksOperandType& tensorType) {
-        if (node->dimensions.size() == 0)
-            return DAWN_INTERNAL_ERROR("Invalid dimensions !!");
-
+    inline void GetTensorDesc(NodeInfo* node, ANeuralNetworksOperandType& tensorType) {
         tensorType.dimensions = &(node->dimensions[0]);
         tensorType.dimensionCount = node->dimensions.size();
         tensorType.scale = 0.0f;
         tensorType.zeroPoint = 0;
         tensorType.type = ConvertToNnapiType(node->type);
-
-        return {};
     }
-} // namespace webnn::native::nnapi
+
+    inline void CreateNodeFromOperandDescriptor(const OperandDescriptor* desc, NodeInfo* node) {
+        node->fd = -1;
+        node->mem = nullptr;
+        node->type = desc->type;
+
+        for (uint32_t i = 0; i < desc->dimensionsCount; i++)
+            node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+    }
+}}  // namespace webnn_native::nnapi
 
 #endif

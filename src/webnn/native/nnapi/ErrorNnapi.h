@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NNAPI_ERROR_NN_H_
-#define WEBNN_NATIVE_NNAPI_ERROR_NN_H_
+#ifndef WEBNN_NATIVE_IE_ERROR_IE_H_
+#define WEBNN_NATIVE_IE_ERROR_IE_H_
 
-#include "webnn/native/Error.h"
+#include "webnn_native/Error.h"
 
-namespace webnn::native::nnapi {
-    struct NodeInfo;
+namespace webnn_native { namespace nnapi {
 
     MaybeError CheckStatusCodeImpl(int32_t code, const char* context);
-    MaybeError CheckForNullNodeImpl(std::shared_ptr<NodeInfo> ptr, const char* context);
 
 #define CheckStatusCode(code, context) CheckStatusCodeImpl(code, context)
-#define CheckForNullNode(ptr, context) CheckForNullNodeImpl(ptr, context)
 
-}  // namespace webnn::native::nnapi
+}}  // namespace webnn_native::nnapi
 
-#endif  // WEBNN_NATIVE_NNAPI_ERROR_NN_H_
+#endif  // WEBNN_NATIVE_IE_ERROR_IE_H_

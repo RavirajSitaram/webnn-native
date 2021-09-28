@@ -12,47 +12,46 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NNAPI_MODEL_NN_H_
-#define WEBNN_NATIVE_NNAPI_MODEL_NN_H_
+#ifndef WEBNN_NATIVE_NNAPI_MODEL_IE_H_
+#define WEBNN_NATIVE_NNAPI_MODEL_IE_H_
 
 #include <map>
 #include <set>
 #include <unordered_set>
 #include <vector>
 
-#include "webnn/native/Error.h"
-#include "webnn/native/Graph.h"
-#include "webnn/native/Operand.h"
-#include "webnn/native/Operator.h"
-#include "webnn/native/nnapi/ContextNnapi.h"
-#include "webnn/native/ops/BatchNorm.h"
-#include "webnn/native/ops/Binary.h"
-#include "webnn/native/ops/Clamp.h"
-#include "webnn/native/ops/Concat.h"
-#include "webnn/native/ops/Constant.h"
-#include "webnn/native/ops/Conv2d.h"
-#include "webnn/native/ops/Gemm.h"
-#include "webnn/native/ops/Input.h"
-#include "webnn/native/ops/InstanceNorm.h"
-#include "webnn/native/ops/LeakyRelu.h"
-#include "webnn/native/ops/Pad.h"
-#include "webnn/native/ops/Pool2d.h"
-#include "webnn/native/ops/Reduce.h"
-#include "webnn/native/ops/Resample2d.h"
-#include "webnn/native/ops/Reshape.h"
-#include "webnn/native/ops/Slice.h"
-#include "webnn/native/ops/Split.h"
-#include "webnn/native/ops/Squeeze.h"
-#include "webnn/native/ops/Transpose.h"
-#include "webnn/native/ops/Unary.h"
+#include "webnn_native/Error.h"
+#include "webnn_native/Graph.h"
+#include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
+#include "webnn_native/nnapi/ContextNnapi.h"
+#include "webnn_native/ops/BatchNorm.h"
+#include "webnn_native/ops/Binary.h"
+#include "webnn_native/ops/Clamp.h"
+#include "webnn_native/ops/Concat.h"
+#include "webnn_native/ops/Constant.h"
+#include "webnn_native/ops/Conv2d.h"
+#include "webnn_native/ops/Gemm.h"
+#include "webnn_native/ops/Input.h"
+#include "webnn_native/ops/InstanceNorm.h"
+#include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/ops/Pad.h"
+#include "webnn_native/ops/Pool2d.h"
+#include "webnn_native/ops/Reduce.h"
+#include "webnn_native/ops/Resample2d.h"
+#include "webnn_native/ops/Slice.h"
+#include "webnn_native/ops/Split.h"
+#include "webnn_native/ops/Squeeze.h"
+#include "webnn_native/ops/Transpose.h"
+#include "webnn_native/ops/Unary.h"
 
 #include "NeuralNetworksTypes.h"
 #include "NnapiManager.h"
 #include "NnapiUtils.h"
 #include "nnapi_implementation.h"
-#include "webnn/native/nnapi/ErrorNnapi.h"
+#include "webnn_native/nnapi/ErrorNnapi.h"
 
-namespace webnn::native::nnapi {
+namespace webnn_native { namespace nnapi {
 
     class Graph : public GraphBase {
       public:
@@ -61,8 +60,7 @@ namespace webnn::native::nnapi {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string_view name,
-                                     const OperandBase* ouput) override;
+        virtual MaybeError AddOutput(const std::string& name, const OperandBase* ouput) override;
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
@@ -82,148 +80,41 @@ namespace webnn::native::nnapi {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* InstanceNorm) override;
         virtual MaybeError Finish() override;
 
-        MaybeError AddSoftMax(const std::shared_ptr<NodeInfo>& input0Node,
-                              std::shared_ptr<NodeInfo> outputNode);
+        MaybeError AddTransposeImpl(NodeInfo& filterNode,
+                                    ml::FilterOperandLayout layout,
+                                    uint32_t& index);
 
       private:
         uint32_t getOperandIdx() {
-            return mOperandCount++;
-        }
-
-        MaybeError AddTransposeImpl(const std::shared_ptr<NodeInfo>& node,
-                                    int32_t* permute,
-                                    uint32_t permuteSize,
-                                    uint32_t& outputIndex);
-        MaybeError AddExpandDimsImpl(const std::shared_ptr<NodeInfo>& node,
-                                     int32_t dim_index,
-                                     uint32_t& index);
-        MaybeError AddMatMulImpl(const std::shared_ptr<NodeInfo>& input0NodeInfo,
-                                 const std::shared_ptr<NodeInfo>& input1NodeInfo,
-                                 std::vector<int32_t> dims,
-                                 uint32_t& outputIndex);
-        MaybeError AddClampImpl(const std::shared_ptr<NodeInfo>& inputNode,
-                                std::shared_ptr<NodeInfo> outputNode,
-                                float min,
-                                float max);
-        MaybeError AddLeakyReluImpl(const std::shared_ptr<NodeInfo>& inputNode,
-                                    std::shared_ptr<NodeInfo> outputNode,
-                                    float alpha);
-        MaybeError AddSigmoidImpl(const std::shared_ptr<NodeInfo>& inputNode,
-                                  std::shared_ptr<NodeInfo> outputNode);
-
-        template <class T>
-        std::shared_ptr<NodeInfo> CreateOperand(std::string name,
-                                                wnn::OperandType type,
-                                                std::vector<T> dims,
-                                                const void* buffer = nullptr) {
-            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
-            node->type = type;
-            for (size_t i = 0; i < dims.size(); i++) {
-                node->dimensions.push_back(static_cast<uint32_t>(dims[i]));
-            }
-
-            MaybeError error;
-            if (buffer) {
-                error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
-            } else {
-                error = mNnapiMgr->CreateOperand(node);
-            }
-
-            if (error.IsError()) {
-                return std::make_shared<NodeInfo>();
-            }
-
-            mIndexNodeMap[node->opIndex] = node;
-            return node;
-        }
-
-        std::shared_ptr<NodeInfo> CreateOperand(std::string name,
-                                                const OperandDescriptor* desc,
-                                                const void* buffer = nullptr) {
-            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
-            node->type = desc->type;
-            for (size_t i = 0; i < desc->dimensionsCount; i++) {
-                node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
-            }
-
-            MaybeError error;
-            if (buffer) {
-                error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
-            } else {
-                error = mNnapiMgr->CreateOperand(node);
-            }
-
-            if (error.IsError()) {
-                return std::make_shared<NodeInfo>();
-            }
-
-            mIndexNodeMap[node->opIndex] = node;
-            return node;
-        }
-
-        std::shared_ptr<NodeInfo> CreateIOOperand(std::string name,
-                                                  const OperandDescriptor* desc,
-                                                  bool input) {
-            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
-            node->type = desc->type;
-            for (size_t i = 0; i < desc->dimensionsCount; i++) {
-                node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
-            }
-
-            MaybeError error = mNnapiMgr->CreateInputOutputOperand(node->name, node, input);
-            if (error.IsError()) {
-                return std::make_shared<NodeInfo>();
-            }
-
-            mIndexNodeMap[node->opIndex] = node;
-            if (input) {
-                mInputNameMap[name] = node;
-                mGraphInputs.push_back(node->opIndex);
-            } else {
-                mOutputNameMap[name] = node;
-                mGraphOutputs.push_back(node->opIndex);
-            }
-            return node;
-        }
-
-        std::shared_ptr<NodeInfo> CreateIOOperand(std::string name,
-                                                  const std::shared_ptr<NodeInfo>& node,
-                                                  bool input) {
-            MaybeError error = mNnapiMgr->CreateInputOutputOperand(name, node, input);
-            if (error.IsError()) {
-                return std::make_shared<NodeInfo>();
-            }
-
-            mIndexNodeMap[node->opIndex] = node;
-            if (input) {
-                mInputNameMap[name] = node;
-                mGraphInputs.push_back(node->opIndex);
-            } else {
-                mOutputNameMap[name] = node;
-                mGraphOutputs.push_back(node->opIndex);
-            }
-            return node;
+            return operandCount++;
         }
 
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                         NamedOutputsBase* outputs) override;
+
         // Map the input name to NNAPI internal input number.
-        std::map<std::string, std::shared_ptr<NodeInfo>> mInputNameMap;
-        // Map the output name to NNAPI internal original output name that will be updated after
+        std::map<std::string, NodeInfo> mInputIdMap;
+        // Map the output name to IE internal original output name that will be updated after
         // TransposeSinking.
-        std::map<std::string, std::shared_ptr<NodeInfo>> mOutputNameMap;
+        std::map<std::string, NodeInfo> mOutputNameMap;
+        // Map the operand to IE internal id
+        std::map<const OperandBase*, std::string> mOperandIdMap;
         // store the constant operands
         // std::unordered_set<const OperandBase*> mConstantSet;
         std::map<const OperandBase*, uint32_t> mGraphNodeMap;  // Add operand index
         std::vector<uint32_t> mGraphOutputs;
         std::vector<uint32_t> mGraphInputs;
-        std::map<uint32_t, std::shared_ptr<NodeInfo>> mIndexNodeMap;
-        uint32_t mOperandCount;
-        // ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand;
-        std::shared_ptr<NnapiManager> mNnapiMgr;
+
+        // const NnApi* mNnapi;
+        std::map<uint32_t, NodeInfo> mGraphOperandInfo;
+        uint32_t operandCount;
+        ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand;
+        NnapiManager* mNnapiMgr;
+
         std::vector<std::unique_ptr<int32_t>> memInt32Vec;
     };
 
-} // namespace webnn::native::nnapi
+}}  // namespace webnn_native::nnapi
 
-#endif  // WEBNN_NATIVE_NNAPI_MODEL_NN_H_
+#endif  // WEBNN_NATIVE_IE_MODEL_IE_H_
