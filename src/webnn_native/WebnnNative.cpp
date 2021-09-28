@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "webnn_native/WebnnNative.h"
+#include <iostream>
 
 #include <memory>
 
@@ -75,6 +76,9 @@ namespace webnn_native {
     }
     namespace mlas {
         ContextBase* Create();
+    }
+    namespace nnapi {
+        ContextBase* Create(MLContextOptions const* options);
     }
 
     const WebnnProcTable& GetProcsAutogen();

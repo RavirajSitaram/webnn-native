@@ -28,6 +28,9 @@ declare_args() {
   # Enables the compilation of MLAS backend
   webnn_enable_mlas = false
 
+  # Enables the compilation of NNAPI backend
+  webnn_enable_nnapi = false
+
   # Enables the compilation of WebNN's Null backend
   # (required for unittests, obviously non-conformant)
   webnn_enable_null = true
