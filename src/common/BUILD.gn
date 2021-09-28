@@ -67,6 +67,10 @@ config("dawn_internal") {
     defines += [ "WEBNN_ENABLE_BACKEND_NULL" ]
   }
 
+  if (webnn_enable_nnapi) {
+    defines += [ "WEBNN_ENABLE_BACKEND_NNNAPI" ]
+  }
+
   if (webnn_enable_openvino) {
     defines += [ "WEBNN_ENABLE_BACKEND_OPENVINO" ]
   }
