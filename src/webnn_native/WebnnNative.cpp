@@ -14,6 +14,7 @@
 // limitations under the License.
 
 #include "webnn_native/WebnnNative.h"
+#include <iostream>
 
 #include <memory>
 
@@ -71,6 +72,9 @@ namespace webnn_native {
 
     MLInstance Instance::Get() const {
         return reinterpret_cast<MLInstanceImpl*>(mImpl);
+    }
+    namespace nnapi {
+        ContextBase* Create(MLContextOptions const* options);
     }
 
     const WebnnProcTable& GetProcsAutogen();
