@@ -39,6 +39,7 @@
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reduce.h"
 #include "webnn_native/ops/Resample2d.h"
+#include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Slice.h"
 #include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Squeeze.h"
