@@ -233,10 +233,7 @@ source_set("webnn_native_sources") {
       "${webnn_root}/third_party/dawn/src/",
     ]
 
-    lib_dirs = [
-      "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
-      "$root_out_dir/",
-    ]
+    lib_dirs = [ "$root_out_dir/" ]
   }
 
   if (webnn_enable_dml) {

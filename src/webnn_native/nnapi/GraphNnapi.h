@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NNAPI_MODEL_IE_H_
-#define WEBNN_NATIVE_NNAPI_MODEL_IE_H_
+#ifndef WEBNN_NATIVE_NNAPI_MODEL_NN_H_
+#define WEBNN_NATIVE_NNAPI_MODEL_NN_H_
 
 #include <map>
 #include <set>
@@ -82,8 +82,12 @@ namespace webnn_native { namespace nnapi {
         virtual MaybeError Finish() override;
 
         MaybeError AddTransposeImpl(NodeInfo& filterNode,
-                                    ml::FilterOperandLayout layout,
+                                    ml::FilterOperandLayout srcLayout,
+                                    ml::FilterOperandLayout dstLayout,
                                     uint32_t& index);
+        MaybeError AddClampImpl(NodeInfo& inputNode, NodeInfo& outputNode, float min, float max);
+        MaybeError AddLeakyReluImpl(NodeInfo& inputNode, NodeInfo& outputNode, float alpha);
+        MaybeError AddSigmoidImpl(NodeInfo& inputNode, NodeInfo& outputNode);
 
       private:
         uint32_t getOperandIdx() {
@@ -118,4 +122,4 @@ namespace webnn_native { namespace nnapi {
 
 }}  // namespace webnn_native::nnapi
 
-#endif  // WEBNN_NATIVE_IE_MODEL_IE_H_
+#endif  // WEBNN_NATIVE_NNAPI_MODEL_NN_H_

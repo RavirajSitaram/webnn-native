@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_IE_ERROR_IE_H_
-#define WEBNN_NATIVE_IE_ERROR_IE_H_
+#ifndef WEBNN_NATIVE_NNAPI_ERROR_NN_H_
+#define WEBNN_NATIVE_NNAPI_ERROR_NN_H_
 
 #include "webnn_native/Error.h"
 
@@ -25,4 +25,4 @@ namespace webnn_native { namespace nnapi {
 
 }}  // namespace webnn_native::nnapi
 
-#endif  // WEBNN_NATIVE_IE_ERROR_IE_H_
+#endif  // WEBNN_NATIVE_NNAPI_ERROR_NN_H_

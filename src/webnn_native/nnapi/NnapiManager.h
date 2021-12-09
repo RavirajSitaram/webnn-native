@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NNAPI_MANAGER_H_
-#define WEBNN_NATIVE_NNAPI_MANAGER_H_
+#ifndef WEBNN_NATIVE_NN_MANAGER_H_
+#define WEBNN_NATIVE_NN_MANAGER_H_
 
 #include <map>
 #include <set>
@@ -37,7 +37,7 @@ namespace webnn_native { namespace nnapi {
             mNnapi->ANeuralNetworksModel_free(mNnModel);
         }
 
-        MaybeError CreateOperandAndSetMemory(std::string name, NodeInfo* node, void* buffer);
+        MaybeError CreateOperandAndSetMemory(std::string name, NodeInfo* node, const void* buffer);
         size_t SetInputMemory(int32_t index,
                               const ANeuralNetworksOperandType* type,
                               const ANeuralNetworksMemory* memory,
@@ -48,7 +48,7 @@ namespace webnn_native { namespace nnapi {
                                const ANeuralNetworksMemory* memory,
                                size_t offset,
                                size_t length);
-        MaybeError CreateScalarOperand(uint32_t type, void* data, uint32_t& index);
+        MaybeError CreateScalarOperand(uint32_t type, const void* data, uint32_t& index);
         MaybeError CreateInputOutputOperand(std::string name, NodeInfo* node, bool input = true);
         MaybeError CreateOperand(NodeInfo* node);
         MaybeError AddOperation(int32_t opCode,
@@ -56,7 +56,7 @@ namespace webnn_native { namespace nnapi {
                                 const uint32_t* input,
                                 size_t outputLen,
                                 const uint32_t* output);
-        MaybeError AddVecOperand(int32_t index, void* buffer, size_t length);
+        MaybeError SetVecOperand(int32_t index, const void* buffer, size_t length);
         MaybeError Compile(uint32_t inputCount,
                            const uint32_t* inputs,
                            uint32_t outputCount,
@@ -79,8 +79,8 @@ namespace webnn_native { namespace nnapi {
         ANeuralNetworksModel* mNnModel;
         ANeuralNetworksCompilation* mNnCompilation;
         ANeuralNetworksExecution* mNnExecution;
-        ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand;
+        ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand, mScalarFloat32Operand;
     };
 }}  // namespace webnn_native::nnapi
 
-#endif  // WEBNN_NATIVE_IE_MODEL_IE_H_
+#endif  // WEBNN_NATIVE_NN_MANAGER_H_

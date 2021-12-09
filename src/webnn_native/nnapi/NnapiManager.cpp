@@ -40,9 +40,15 @@ namespace webnn_native { namespace nnapi {
         mScalarBoolOperand.dimensions = nullptr;
         mScalarBoolOperand.scale = 0.0f;
         mScalarBoolOperand.zeroPoint = 0;
+
+        mScalarFloat32Operand.type = ANEURALNETWORKS_FLOAT32;
+        mScalarFloat32Operand.dimensionCount = 0;
+        mScalarFloat32Operand.dimensions = nullptr;
+        mScalarFloat32Operand.scale = 0.0f;
+        mScalarFloat32Operand.zeroPoint = 0;
     }
 
-    MaybeError NnapiManager::AddVecOperand(int32_t index, void* buffer, size_t length) {
+    MaybeError NnapiManager::SetVecOperand(int32_t index, const void* buffer, size_t length) {
         int32_t status =
             mNnapi->ANeuralNetworksModel_setOperandValue(mNnModel, index, buffer, length);
         DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_setOperandValueFromMemory failed"));
@@ -51,7 +57,7 @@ namespace webnn_native { namespace nnapi {
 
     MaybeError NnapiManager::CreateOperandAndSetMemory(std::string name,
                                                        NodeInfo* node,
-                                                       void* buffer) {
+                                                       const void* buffer) {
         uint32_t totalBytes = node->GetByteCount();
 
         uint32_t operandIndex = GetOperandIdx();
@@ -113,7 +119,7 @@ namespace webnn_native { namespace nnapi {
         return status;
     }
 
-    MaybeError NnapiManager::CreateScalarOperand(uint32_t type, void* data, uint32_t& index) {
+    MaybeError NnapiManager::CreateScalarOperand(uint32_t type, const void* data, uint32_t& index) {
         ANeuralNetworksOperandType nnOpType;
         size_t opSize = 1;
 
@@ -125,6 +131,10 @@ namespace webnn_native { namespace nnapi {
             case ANEURALNETWORKS_INT32:
                 nnOpType = mScalarInt32Operand;
                 opSize = sizeof(int32_t);
+                break;
+            case ANEURALNETWORKS_FLOAT32:
+                nnOpType = mScalarFloat32Operand;
+                opSize = sizeof(float);
                 break;
             default:
                 return DAWN_UNIMPLEMENTED_ERROR("Unsupported scalar type !!!");
