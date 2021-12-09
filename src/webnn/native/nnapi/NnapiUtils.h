@@ -41,6 +41,12 @@ namespace webnn_native { namespace nnapi {
             mem = nullptr;
         }
 
+        size_t getDimsSize() {
+            size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
+                                           std::multiplies<size_t>());
+            return count;
+        }
+
         size_t GetByteCount() {
             size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
                                            std::multiplies<size_t>());
