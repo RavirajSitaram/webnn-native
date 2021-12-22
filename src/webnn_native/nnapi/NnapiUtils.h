@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_NNAPI_UTILS_H_
 #define WEBNN_NATIVE_NNAPI_UTILS_H_
 #include <functional>
+#include <limits>
 #include <numeric>
 
 #include "webnn_native/Error.h"
@@ -39,6 +40,7 @@ namespace webnn_native { namespace nnapi {
         NodeInfo() {
             fd = -1;
             mem = nullptr;
+            opIndex = INT32_MAX;
         }
 
         size_t getDimsSize() {

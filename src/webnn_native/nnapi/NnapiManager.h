@@ -48,7 +48,10 @@ namespace webnn_native { namespace nnapi {
                                const ANeuralNetworksMemory* memory,
                                size_t offset,
                                size_t length);
-        MaybeError CreateScalarOperand(uint32_t type, const void* data, uint32_t& index);
+        MaybeError CreateScalarOperand(uint32_t type,
+                                       const void* data,
+                                       uint32_t& index,
+                                       bool optional = false);
         MaybeError CreateInputOutputOperand(std::string name, NodeInfo* node, bool input = true);
         MaybeError CreateOperand(NodeInfo* node);
         MaybeError AddOperation(int32_t opCode,
