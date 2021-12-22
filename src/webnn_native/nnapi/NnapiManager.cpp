@@ -119,7 +119,10 @@ namespace webnn_native { namespace nnapi {
         return status;
     }
 
-    MaybeError NnapiManager::CreateScalarOperand(uint32_t type, const void* data, uint32_t& index) {
+    MaybeError NnapiManager::CreateScalarOperand(uint32_t type,
+                                                 const void* data,
+                                                 uint32_t& index,
+                                                 bool optional) {
         ANeuralNetworksOperandType nnOpType;
         size_t opSize = 1;
 
@@ -144,8 +147,13 @@ namespace webnn_native { namespace nnapi {
         int32_t status = mNnapi->ANeuralNetworksModel_addOperand(mNnModel, &nnOpType);
         DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_addOperand failed"));
 
-        status = mNnapi->ANeuralNetworksModel_setOperandValue(mNnModel, index, data, opSize);
-        DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_setOperandValue failed"));
+        if (!optional) {
+            status = mNnapi->ANeuralNetworksModel_setOperandValue(mNnModel, index, data, opSize);
+            DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_setOperandValue failed"));
+        } else {
+            status = mNnapi->ANeuralNetworksModel_setOperandValue(mNnModel, index, nullptr, 0);
+            DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_setOperandValue failed"));
+        }
 
         return {};
     }
