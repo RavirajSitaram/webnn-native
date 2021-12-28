@@ -81,23 +81,27 @@ namespace webnn_native { namespace nnapi {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* InstanceNorm) override;
         virtual MaybeError Finish() override;
 
-      private:
-        uint32_t getOperandIdx() {
-            return operandCount++;
-        }
-
         MaybeError AddTransposeImpl(NodeInfo& filterNode,
                                     NodeInfo& outputNode,
                                     int32_t* permute,
                                     uint32_t permuteSize);
+        MaybeError AddExpandDimsImpl(NodeInfo& node, int32_t dim_index, uint32_t& index);
         MaybeError AddClampImpl(NodeInfo& inputNode, NodeInfo& outputNode, float min, float max);
         MaybeError AddLeakyReluImpl(NodeInfo& inputNode, NodeInfo& outputNode, float alpha);
         MaybeError AddSigmoidImpl(NodeInfo& inputNode, NodeInfo& outputNode);
         MaybeError AddSoftMax(NodeInfo& input0Node, NodeInfo& outputNode);
 
-        MaybeError CreateOutputNode(NodeInfo& outNode,
-                                    ml::OperandType type,
-                                    std::vector<int32_t> dims);
+        MaybeError CreateNode(NodeInfo& outNode, ml::OperandType type, std::vector<int32_t> dims);
+        MaybeError AddMatMulImpl(NodeInfo& input0NodeInfo,
+                                 NodeInfo& input1NodeInfo,
+                                 NodeInfo& outputNode,
+                                 std::vector<int32_t> dims,
+                                 uint32_t& outputIndex);
+
+      private:
+        uint32_t getOperandIdx() {
+            return operandCount++;
+        }
 
         MaybeError CompileImpl() override;
         MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
