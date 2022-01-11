@@ -690,7 +690,7 @@ namespace webnn_native { namespace nnapi {
         }
 
         if (options->activation != nullptr &&
-            (options->activation->GetFusedOperator() == FusedOperator::Relu)) {
+            (options->activation->GetFusionType() == FusionType::Relu)) {
             fuseOperation = 1;
         }
 
@@ -769,20 +769,20 @@ namespace webnn_native { namespace nnapi {
             activationNode.type = outputNode.type;
             activationNode.dimensions = outputNode.dimensions;
 
-            if (options->activation->GetFusedOperator() == FusedOperator::Clamp) {
+            if (options->activation->GetFusionType() == FusionType::Clamp) {
                 DAWN_TRY(mNnapiMgr->CreateOperand(&activationNode));
                 auto clamp = reinterpret_cast<const op::Clamp*>(options->activation);
                 DAWN_TRY(AddClampImpl(outputNode, activationNode, clamp->GetMinValue(),
                                       clamp->GetMaxValue()));
                 mGraphOperandInfo[activationNode.opIndex] = activationNode;
                 mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode.opIndex;
-            } else if (options->activation->GetFusedOperator() == FusedOperator::LeakyRelu) {
+            } else if (options->activation->GetFusionType() == FusionType::LeakyRelu) {
                 DAWN_TRY(mNnapiMgr->CreateOperand(&activationNode));
                 auto leakyRelu = reinterpret_cast<const op::LeakyRelu*>(options->activation);
                 DAWN_TRY(AddLeakyReluImpl(outputNode, activationNode, leakyRelu->GetAlpha()));
                 mGraphOperandInfo[activationNode.opIndex] = activationNode;
                 mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode.opIndex;
-            } else if (options->activation->GetFusedOperator() == FusedOperator::Sigmoid) {
+            } else if (options->activation->GetFusionType() == FusionType::Sigmoid) {
                 DAWN_TRY(mNnapiMgr->CreateOperand(&activationNode));
                 DAWN_TRY(AddSigmoidImpl(outputNode, activationNode));
                 mGraphOperandInfo[activationNode.opIndex] = activationNode;

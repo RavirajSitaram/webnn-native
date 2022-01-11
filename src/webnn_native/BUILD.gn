@@ -220,6 +220,7 @@ source_set("webnn_native_sources") {
     ]
 
     sources += [
+      "nnapi/BackendNnapi.cpp",
       "nnapi/ContextNnapi.cpp",
       "nnapi/ErrorNnapi.cpp",
       "nnapi/GraphNnapi.cpp",

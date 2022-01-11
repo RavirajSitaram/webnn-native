@@ -109,10 +109,10 @@ namespace webnn_native { namespace nnapi {
 
         // Map the input name to NNAPI internal input number.
         std::map<std::string, NodeInfo> mInputIdMap;
-        // Map the output name to IE internal original output name that will be updated after
+        // Map the output name to NNAPI internal original output name that will be updated after
         // TransposeSinking.
         std::map<std::string, NodeInfo> mOutputNameMap;
-        // Map the operand to IE internal id
+        // Map the operand to NNAPI internal id
         std::map<const OperandBase*, std::string> mOperandIdMap;
         // store the constant operands
         // std::unordered_set<const OperandBase*> mConstantSet;
