@@ -70,7 +70,7 @@ config("internal_config") {
   }
 
   if (webnn_enable_nnapi) {
-    defines += [ "WEBNN_ENABLE_BACKEND_NNNAPI" ]
+    defines += [ "WEBNN_ENABLE_BACKEND_NNAPI" ]
   }
 
   if (webnn_enable_openvino) {

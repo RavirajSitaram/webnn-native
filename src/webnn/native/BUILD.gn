@@ -219,6 +219,7 @@ source_set("sources") {
     ]
 
     sources += [
+      "nnapi/BackendNnapi.cpp",
       "nnapi/ContextNnapi.cpp",
       "nnapi/ErrorNnapi.cpp",
       "nnapi/GraphNnapi.cpp",
