@@ -326,6 +326,10 @@ namespace webnn_native { namespace nnapi {
         const Pool2dOptions* options = pool2d->GetOptions();
 
         // input
+        auto inputShape = pool2d->Inputs()[0]->Shape();
+        bool nchw = options->layout == ml::InputOperandLayout::Nchw;
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
         auto inputOpIndex = mGraphNodeMap[pool2d->Inputs()[0].Get()];
         auto inputNodeInfo = mIndexNodeMap[inputOpIndex];
 
@@ -341,15 +345,17 @@ namespace webnn_native { namespace nnapi {
         int32_t paddingBottom = options->padding ? options->padding[1] : 0;
         int32_t strideWidth = options->strides ? options->strides[1] : 0;
         int32_t strideHeight = options->strides ? options->strides[0] : 0;
-        int32_t filterWidth = options->windowDimensions ? options->windowDimensions[1] : 0;
-        int32_t filterHeight = options->windowDimensions ? options->windowDimensions[0] : 0;
-        int32_t dilationWidth = options->windowDimensions ? options->dilations[1] : 0;
-        int32_t dilationHeight = options->windowDimensions ? options->dilations[0] : 0;
-        int8_t layout = (options->layout == wnn::InputOperandLayout::Nhwc) ? 0 : 1;
+        int32_t filterWidth =
+            options->windowDimensions == nullptr ? inputWidth : options->windowDimensions[1];
+        int32_t filterHeight =
+            options->windowDimensions == nullptr ? inputHeight : options->windowDimensions[0];
+        int32_t dilationWidth = options->dilations ? options->dilations[1] : 0;
+        int32_t dilationHeight = options->dilations ? options->dilations[0] : 0;
+        int8_t layout = (options->layout == ml::InputOperandLayout::Nhwc) ? 0 : 1;
         uint32_t fuseOperation = 0;
 
         if (dilationWidth > 1 && dilationHeight > 1) {
-            dawn::ErrorLog() << "MaxPool2D: No Dilation support ";
+            dawn::ErrorLog() << "AddPool2D: No Dilation support ";
             return DAWN_VALIDATION_ERROR("Dilation is not yet supported");
         }
 
@@ -381,8 +387,26 @@ namespace webnn_native { namespace nnapi {
                                                strideHOp,     filterWOp,        filterHOp,
                                                fuseOp,        layoutOp};
 
-            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
-                                             inputList.data(), 1, &outputNode->opIndex));
+            switch (pool2d->GetType()) {
+                case op::Pool2dType::kAveragePool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_AVERAGE_POOL_2D,
+                                                     inputList.size(), inputList.data(), 1,
+                                                     &outputNode.opIndex));
+                    break;
+                case op::Pool2dType::kL2Pool2d:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi L2Pool2d unsupported operation"));
+                    break;
+                case op::Pool2dType::kMaxPool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
+                                                     inputList.data(), 1, &outputNode.opIndex));
+                    break;
+                default:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi Pool2D unsupported operation"));
+                    break;
+            }
+
         } else {
             int32_t height = (options->layout == wnn::InputOperandLayout::Nchw)
                                  ? inputNodeInfo->dimensions[2]
@@ -422,8 +446,25 @@ namespace webnn_native { namespace nnapi {
                                                strideHOp,     filterWOp,        filterHOp,
                                                fuseOp,        layoutOp};
 
-            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
-                                             inputList.data(), 1, &outputNode->opIndex));
+            switch (pool2d->GetType()) {
+                case op::Pool2dType::kAveragePool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_AVERAGE_POOL_2D,
+                                                     inputList.size(), inputList.data(), 1,
+                                                     &outputNode.opIndex));
+                    break;
+                case op::Pool2dType::kL2Pool2d:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi L2Pool2d unsupported operation"));
+                    break;
+                case op::Pool2dType::kMaxPool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
+                                                     inputList.data(), 1, &outputNode.opIndex));
+                    break;
+                default:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi Pool2D unsupported operation"));
+                    break;
+            }
         }
         return {};
     }
