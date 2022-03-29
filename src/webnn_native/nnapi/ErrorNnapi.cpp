@@ -32,4 +32,10 @@ namespace webnn_native { namespace nnapi {
         return {};
     }
 
+    MaybeError CheckForNullNodeImpl(std::shared_ptr<NodeInfo> ptr, const char* context) {
+        if (!ptr)
+            return DAWN_INTERNAL_ERROR(context);
+        return {};
+    }
+
 }}  // namespace webnn_native::nnapi

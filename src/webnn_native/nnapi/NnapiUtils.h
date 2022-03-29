@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_NNAPI_UTILS_H_
 #define WEBNN_NATIVE_NNAPI_UTILS_H_
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <numeric>
 
@@ -30,29 +31,22 @@
 namespace webnn_native { namespace nnapi {
 
     struct NodeInfo {
-        int fd;
-        ANeuralNetworksMemory* mem;
         ml::OperandType type;
         std::vector<uint32_t> dimensions;
         std::string name;
         uint32_t opIndex;
 
-        NodeInfo() {
-            fd = -1;
-            mem = nullptr;
-            opIndex = INT32_MAX;
+        NodeInfo() : opIndex(INT32_MAX) {
         }
 
         size_t getDimsSize() {
-            size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
-                                           std::multiplies<size_t>());
-            return count;
+            return std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
+                                   std::multiplies<size_t>());
         }
 
         size_t GetByteCount() {
             size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
                                            std::multiplies<size_t>());
-
             switch (type) {
                 case ml::OperandType::Float32:
                 case ml::OperandType::Uint32:
@@ -65,14 +59,12 @@ namespace webnn_native { namespace nnapi {
                 default:
                     UNREACHABLE();
             }
-
             return count;
         }
     };
 
     inline int32_t ConvertToNnapiType(ml::OperandType type) {
         int32_t nnapiType;
-
         switch (type) {
             case ml::OperandType::Float32:
                 nnapiType = ANEURALNETWORKS_TENSOR_FLOAT32;
@@ -89,25 +81,21 @@ namespace webnn_native { namespace nnapi {
             default:
                 UNREACHABLE();
         }
-
         return nnapiType;
     }
 
-    inline void GetTensorDesc(NodeInfo* node, ANeuralNetworksOperandType& tensorType) {
+    inline MaybeError GetTensorDesc(const std::shared_ptr<NodeInfo>& node,
+                              ANeuralNetworksOperandType& tensorType) {
+        if (node->dimensions.size() == 0 )
+            return DAWN_INTERNAL_ERROR("Invalid dimensions !!");
+
         tensorType.dimensions = &(node->dimensions[0]);
         tensorType.dimensionCount = node->dimensions.size();
         tensorType.scale = 0.0f;
         tensorType.zeroPoint = 0;
         tensorType.type = ConvertToNnapiType(node->type);
-    }
 
-    inline void CreateNodeFromOperandDescriptor(const OperandDescriptor* desc, NodeInfo* node) {
-        node->fd = -1;
-        node->mem = nullptr;
-        node->type = desc->type;
-
-        for (uint32_t i = 0; i < desc->dimensionsCount; i++)
-            node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+        return {};
     }
 }}  // namespace webnn_native::nnapi
 

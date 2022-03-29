@@ -15,6 +15,7 @@
 
 #include <errno.h>
 #include <string.h>
+#include <iostream>
 
 #include "NnapiManager.h"
 #include "common/Assert.h"
@@ -29,23 +30,23 @@ namespace webnn_native { namespace nnapi {
             mNnapi->ANeuralNetworksModel_create(&mNnModel);
         }
 
-        mScalarInt32Operand.type = ANEURALNETWORKS_INT32;
-        mScalarInt32Operand.dimensionCount = 0;
-        mScalarInt32Operand.dimensions = nullptr;
-        mScalarInt32Operand.scale = 0.0f;
-        mScalarInt32Operand.zeroPoint = 0;
+        mInt32Operand.type = ANEURALNETWORKS_INT32;
+        mInt32Operand.dimensionCount = 0;
+        mInt32Operand.dimensions = nullptr;
+        mInt32Operand.scale = 0.0f;
+        mInt32Operand.zeroPoint = 0;
 
-        mScalarBoolOperand.type = ANEURALNETWORKS_BOOL;
-        mScalarBoolOperand.dimensionCount = 0;
-        mScalarBoolOperand.dimensions = nullptr;
-        mScalarBoolOperand.scale = 0.0f;
-        mScalarBoolOperand.zeroPoint = 0;
+        mBoolOperand.type = ANEURALNETWORKS_BOOL;
+        mBoolOperand.dimensionCount = 0;
+        mBoolOperand.dimensions = nullptr;
+        mBoolOperand.scale = 0.0f;
+        mBoolOperand.zeroPoint = 0;
 
-        mScalarFloat32Operand.type = ANEURALNETWORKS_FLOAT32;
-        mScalarFloat32Operand.dimensionCount = 0;
-        mScalarFloat32Operand.dimensions = nullptr;
-        mScalarFloat32Operand.scale = 0.0f;
-        mScalarFloat32Operand.zeroPoint = 0;
+        mFloat32Operand.type = ANEURALNETWORKS_FLOAT32;
+        mFloat32Operand.dimensionCount = 0;
+        mFloat32Operand.dimensions = nullptr;
+        mFloat32Operand.scale = 0.0f;
+        mFloat32Operand.zeroPoint = 0;
     }
 
     MaybeError NnapiManager::SetVecOperand(int32_t index, const void* buffer, size_t length) {
@@ -56,11 +57,11 @@ namespace webnn_native { namespace nnapi {
     }
 
     MaybeError NnapiManager::CreateOperandAndSetMemory(std::string name,
-                                                       NodeInfo* node,
+                                                       const std::shared_ptr<NodeInfo>& node,
                                                        const void* buffer) {
         uint32_t totalBytes = node->GetByteCount();
-
         uint32_t operandIndex = GetOperandIdx();
+        struct FdMem memObj;
         name = name + std::to_string(operandIndex);
         int fd = mNnapi->ASharedMemory_create(name.c_str(), totalBytes);
         DAWN_TRY(CheckStatusCode(fd == -1 ? ANEURALNETWORKS_OP_FAILED : ANEURALNETWORKS_NO_ERROR,
@@ -83,7 +84,7 @@ namespace webnn_native { namespace nnapi {
         munmap(inputTensorPtr, totalBytes);
 
         ANeuralNetworksOperandType tensorType;
-        GetTensorDesc(node, tensorType);
+        DAWN_TRY(GetTensorDesc(node, tensorType));
         status = mNnapi->ANeuralNetworksModel_addOperand(mNnModel, &tensorType);
         DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_addOperand failed"));
 
@@ -92,10 +93,10 @@ namespace webnn_native { namespace nnapi {
         DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_setOperandValueFromMemory failed"));
 
         node->name = name;
-        node->fd = fd;
-        node->mem = nnMemory;
         node->opIndex = operandIndex;
-
+        memObj.fd = fd;
+        memObj.mem = nnMemory;
+        mFdMemMap[operandIndex] = memObj;
         return {};
     }
 
@@ -104,9 +105,8 @@ namespace webnn_native { namespace nnapi {
                                         const ANeuralNetworksMemory* memory,
                                         size_t offset,
                                         size_t length) {
-        int32_t status = mNnapi->ANeuralNetworksExecution_setInputFromMemory(
-            mNnExecution, index, nullptr, memory, 0, length);
-        return status;
+        return mNnapi->ANeuralNetworksExecution_setInputFromMemory(mNnExecution, index, nullptr,
+                                                                   memory, 0, length);
     }
 
     size_t NnapiManager::SetOutputMemory(int32_t index,
@@ -114,9 +114,8 @@ namespace webnn_native { namespace nnapi {
                                          const ANeuralNetworksMemory* memory,
                                          size_t offset,
                                          size_t length) {
-        int32_t status = mNnapi->ANeuralNetworksExecution_setOutputFromMemory(
-            mNnExecution, index, nullptr, memory, 0, length);
-        return status;
+        return mNnapi->ANeuralNetworksExecution_setOutputFromMemory(mNnExecution, index, nullptr,
+                                                                    memory, 0, length);
     }
 
     MaybeError NnapiManager::CreateScalarOperand(uint32_t type,
@@ -128,15 +127,15 @@ namespace webnn_native { namespace nnapi {
 
         switch (type) {
             case ANEURALNETWORKS_BOOL:
-                nnOpType = mScalarBoolOperand;
+                nnOpType = mBoolOperand;
                 opSize = sizeof(int8_t);
                 break;
             case ANEURALNETWORKS_INT32:
-                nnOpType = mScalarInt32Operand;
+                nnOpType = mInt32Operand;
                 opSize = sizeof(int32_t);
                 break;
             case ANEURALNETWORKS_FLOAT32:
-                nnOpType = mScalarFloat32Operand;
+                nnOpType = mFloat32Operand;
                 opSize = sizeof(float);
                 break;
             default:
@@ -159,19 +158,19 @@ namespace webnn_native { namespace nnapi {
     }
 
     MaybeError NnapiManager::CreateInputOutputOperand(std::string name,
-                                                      NodeInfo* node,
+                                                      const std::shared_ptr<NodeInfo>& node,
                                                       bool input) {
         int32_t status, fd;
+        struct FdMem memObj;
         ANeuralNetworksMemory* nnMemory = nullptr;
 
         if (input) {
             uint32_t operandIndex = GetOperandIdx();
             ANeuralNetworksOperandType tensorType;
-            GetTensorDesc(node, tensorType);
+            DAWN_TRY(GetTensorDesc(node, tensorType));
             status = mNnapi->ANeuralNetworksModel_addOperand(mNnModel, &tensorType);
             DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_addOperand failed"));
             node->opIndex = operandIndex;
-
             name = name + std::to_string(operandIndex);
             fd = mNnapi->ASharedMemory_create(name.c_str(), node->GetByteCount());
             DAWN_TRY(
@@ -193,20 +192,19 @@ namespace webnn_native { namespace nnapi {
             DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksMemory_createFromFd failed"));
         }
 
-        node->name = name;
-        node->fd = fd;
-        node->mem = nnMemory;
-
+        // node->name = name;
+        memObj.fd = fd;
+        memObj.mem = nnMemory;
+        mFdMemMap[node->opIndex] = memObj;
         return {};
     }
 
-    MaybeError NnapiManager::CreateOperand(NodeInfo* node) {
+    MaybeError NnapiManager::CreateOperand(const std::shared_ptr<NodeInfo>& node) {
         uint32_t operandIndex = GetOperandIdx();
         ANeuralNetworksOperandType tensorType;
-        GetTensorDesc(node, tensorType);
+        DAWN_TRY(GetTensorDesc(node, tensorType));
         int32_t status = mNnapi->ANeuralNetworksModel_addOperand(mNnModel, &tensorType);
         DAWN_TRY(CheckStatusCode(status, "ANeuralNetworksModel_addOperand failed"));
-
         node->opIndex = operandIndex;
         return {};
     }
