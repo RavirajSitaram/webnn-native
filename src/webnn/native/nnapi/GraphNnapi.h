@@ -81,51 +81,146 @@ namespace webnn_native { namespace nnapi {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* InstanceNorm) override;
         virtual MaybeError Finish() override;
 
-        MaybeError AddTransposeImpl(NodeInfo& filterNode,
-                                    NodeInfo& outputNode,
-                                    int32_t* permute,
-                                    uint32_t permuteSize);
-        MaybeError AddExpandDimsImpl(NodeInfo& node, int32_t dim_index, uint32_t& index);
-        MaybeError AddClampImpl(NodeInfo& inputNode, NodeInfo& outputNode, float min, float max);
-        MaybeError AddLeakyReluImpl(NodeInfo& inputNode, NodeInfo& outputNode, float alpha);
-        MaybeError AddSigmoidImpl(NodeInfo& inputNode, NodeInfo& outputNode);
-        MaybeError AddSoftMax(NodeInfo& input0Node, NodeInfo& outputNode);
-
-        MaybeError CreateNode(NodeInfo& outNode, ml::OperandType type, std::vector<int32_t> dims);
-        MaybeError AddMatMulImpl(NodeInfo& input0NodeInfo,
-                                 NodeInfo& input1NodeInfo,
-                                 NodeInfo& outputNode,
-                                 std::vector<int32_t> dims,
-                                 uint32_t& outputIndex);
+        MaybeError AddSoftMax(const std::shared_ptr<NodeInfo>& input0Node,
+                              std::shared_ptr<NodeInfo> outputNode);
 
       private:
         uint32_t getOperandIdx() {
-            return operandCount++;
+            return mOperandCount++;
+        }
+
+        MaybeError AddTransposeImpl(const std::shared_ptr<NodeInfo>& node,
+                                    int32_t* permute,
+                                    uint32_t permuteSize,
+                                    uint32_t& outputIndex);
+        MaybeError AddExpandDimsImpl(const std::shared_ptr<NodeInfo>& node,
+                                     int32_t dim_index,
+                                     uint32_t& index);
+        MaybeError AddMatMulImpl(const std::shared_ptr<NodeInfo>& input0NodeInfo,
+                                 const std::shared_ptr<NodeInfo>& input1NodeInfo,
+                                 std::vector<int32_t> dims,
+                                 uint32_t& outputIndex);
+        MaybeError AddClampImpl(const std::shared_ptr<NodeInfo>& inputNode,
+                                std::shared_ptr<NodeInfo> outputNode,
+                                float min,
+                                float max);
+        MaybeError AddLeakyReluImpl(const std::shared_ptr<NodeInfo>& inputNode,
+                                    std::shared_ptr<NodeInfo> outputNode,
+                                    float alpha);
+        MaybeError AddSigmoidImpl(const std::shared_ptr<NodeInfo>& inputNode,
+                                  std::shared_ptr<NodeInfo> outputNode);
+
+        template <class T>
+        std::shared_ptr<NodeInfo> CreateOperand(std::string name,
+                                                ml::OperandType type,
+                                                std::vector<T> dims,
+                                                const void* buffer = nullptr) {
+            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
+            node->type = type;
+            for (size_t i = 0; i < dims.size(); i++) {
+                node->dimensions.push_back(static_cast<uint32_t>(dims[i]));
+            }
+
+            MaybeError error;
+            if (buffer) {
+                error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
+            } else {
+                error = mNnapiMgr->CreateOperand(node);
+            }
+
+            if (error.IsError()) {
+                return std::make_shared<NodeInfo>();
+            }
+
+            mIndexNodeMap[node->opIndex] = node;
+            return node;
+        }
+
+        std::shared_ptr<NodeInfo> CreateOperand(std::string name,
+                                                const OperandDescriptor* desc,
+                                                const void* buffer = nullptr) {
+            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
+            node->type = desc->type;
+            for (size_t i = 0; i < desc->dimensionsCount; i++) {
+                node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+            }
+
+            MaybeError error;
+            if (buffer) {
+                error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
+            } else {
+                error = mNnapiMgr->CreateOperand(node);
+            }
+
+            if (error.IsError()) {
+                return std::make_shared<NodeInfo>();
+            }
+
+            mIndexNodeMap[node->opIndex] = node;
+            return node;
+        }
+
+        std::shared_ptr<NodeInfo> CreateIOOperand(std::string name,
+                                                  const OperandDescriptor* desc,
+                                                  bool input) {
+            std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
+            node->type = desc->type;
+            for (size_t i = 0; i < desc->dimensionsCount; i++) {
+                node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+            }
+
+            MaybeError error = mNnapiMgr->CreateInputOutputOperand(node->name, node, input);
+            if (error.IsError()) {
+                return std::make_shared<NodeInfo>();
+            }
+
+            mIndexNodeMap[node->opIndex] = node;
+            if (input) {
+                mInputNameMap[name] = node;
+                mGraphInputs.push_back(node->opIndex);
+            } else {
+                mOutputNameMap[name] = node;
+                mGraphOutputs.push_back(node->opIndex);
+            }
+            return node;
+        }
+
+        std::shared_ptr<NodeInfo> CreateIOOperand(std::string name,
+                                                  const std::shared_ptr<NodeInfo>& node,
+                                                  bool input) {
+            MaybeError error = mNnapiMgr->CreateInputOutputOperand(name, node, input);
+            if (error.IsError()) {
+                return std::make_shared<NodeInfo>();
+            }
+
+            mIndexNodeMap[node->opIndex] = node;
+            if (input) {
+                mInputNameMap[name] = node;
+                mGraphInputs.push_back(node->opIndex);
+            } else {
+                mOutputNameMap[name] = node;
+                mGraphOutputs.push_back(node->opIndex);
+            }
+            return node;
         }
 
         MaybeError CompileImpl() override;
         MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
                                          NamedOutputsBase* outputs) override;
-
         // Map the input name to NNAPI internal input number.
-        std::map<std::string, NodeInfo> mInputIdMap;
+        std::map<std::string, std::shared_ptr<NodeInfo>> mInputNameMap;
         // Map the output name to NNAPI internal original output name that will be updated after
         // TransposeSinking.
-        std::map<std::string, NodeInfo> mOutputNameMap;
-        // Map the operand to NNAPI internal id
-        std::map<const OperandBase*, std::string> mOperandIdMap;
+        std::map<std::string, std::shared_ptr<NodeInfo>> mOutputNameMap;
         // store the constant operands
         // std::unordered_set<const OperandBase*> mConstantSet;
         std::map<const OperandBase*, uint32_t> mGraphNodeMap;  // Add operand index
         std::vector<uint32_t> mGraphOutputs;
         std::vector<uint32_t> mGraphInputs;
-
-        // const NnApi* mNnapi;
-        std::map<uint32_t, NodeInfo> mGraphOperandInfo;
-        uint32_t operandCount;
-        ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand;
-        NnapiManager* mNnapiMgr;
-
+        std::map<uint32_t, std::shared_ptr<NodeInfo>> mIndexNodeMap;
+        uint32_t mOperandCount;
+        // ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand;
+        std::shared_ptr<NnapiManager> mNnapiMgr;
         std::vector<std::unique_ptr<int32_t>> memInt32Vec;
     };
 
