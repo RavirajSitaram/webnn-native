@@ -15,8 +15,10 @@
 #ifndef WEBNN_NATIVE_NN_MANAGER_H_
 #define WEBNN_NATIVE_NN_MANAGER_H_
 
+#include <unistd.h>
 #include <map>
 #include <set>
+#include <tuple>
 #include <unordered_set>
 #include <vector>
 
@@ -28,16 +30,28 @@
 
 namespace webnn_native { namespace nnapi {
 
+    struct FdMem {
+        int fd;
+        ANeuralNetworksMemory* mem;
+    };
+
     class NnapiManager {
       public:
         explicit NnapiManager();
 
         ~NnapiManager() {
+            for (auto const& element : mFdMemMap) {
+                close(element.second.fd);
+                mNnapi->ANeuralNetworksMemory_free(element.second.mem);
+            }
+
             mNnapi->ANeuralNetworksCompilation_free(mNnCompilation);
             mNnapi->ANeuralNetworksModel_free(mNnModel);
         }
 
-        MaybeError CreateOperandAndSetMemory(std::string name, NodeInfo* node, const void* buffer);
+        MaybeError CreateOperandAndSetMemory(std::string name,
+                                             const std::shared_ptr<NodeInfo>& node,
+                                             const void* buffer);
         size_t SetInputMemory(int32_t index,
                               const ANeuralNetworksOperandType* type,
                               const ANeuralNetworksMemory* memory,
@@ -52,8 +66,10 @@ namespace webnn_native { namespace nnapi {
                                        const void* data,
                                        uint32_t& index,
                                        bool optional = false);
-        MaybeError CreateInputOutputOperand(std::string name, NodeInfo* node, bool input = true);
-        MaybeError CreateOperand(NodeInfo* node);
+        MaybeError CreateInputOutputOperand(std::string name,
+                                            const std::shared_ptr<NodeInfo>& node,
+                                            bool input = true);
+        MaybeError CreateOperand(const std::shared_ptr<NodeInfo>& node);
         MaybeError AddOperation(int32_t opCode,
                                 size_t inputLen,
                                 const uint32_t* input,
@@ -65,12 +81,11 @@ namespace webnn_native { namespace nnapi {
                            uint32_t outputCount,
                            const uint32_t* outputs);
         MLComputeGraphStatus ComputeAndWait();
-
-        void FreeMemory(ANeuralNetworksMemory* memory) {
-            mNnapi->ANeuralNetworksMemory_free(memory);
-        }
-
         MLComputeGraphStatus InitExecutionContext();
+        void getFdNNMemory(uint32_t index, int& fd, ANeuralNetworksMemory*& mem) {
+            fd = mFdMemMap[index].fd;
+            mem = mFdMemMap[index].mem;
+        }
 
       private:
         uint32_t GetOperandIdx() {
@@ -82,7 +97,8 @@ namespace webnn_native { namespace nnapi {
         ANeuralNetworksModel* mNnModel;
         ANeuralNetworksCompilation* mNnCompilation;
         ANeuralNetworksExecution* mNnExecution;
-        ANeuralNetworksOperandType mScalarInt32Operand, mScalarBoolOperand, mScalarFloat32Operand;
+        ANeuralNetworksOperandType mInt32Operand, mBoolOperand, mFloat32Operand;
+        std::map<uint32_t, struct FdMem> mFdMemMap;
     };
 }}  // namespace webnn_native::nnapi
 

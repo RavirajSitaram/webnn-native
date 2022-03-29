@@ -18,10 +18,13 @@
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace nnapi {
+    struct NodeInfo;
 
     MaybeError CheckStatusCodeImpl(int32_t code, const char* context);
+    MaybeError CheckForNullNodeImpl(std::shared_ptr<NodeInfo> ptr, const char* context);
 
 #define CheckStatusCode(code, context) CheckStatusCodeImpl(code, context)
+#define CheckForNullNode(ptr, context) CheckForNullNodeImpl(ptr, context)
 
 }}  // namespace webnn_native::nnapi
 
