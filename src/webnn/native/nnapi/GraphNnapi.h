@@ -112,7 +112,7 @@ namespace webnn_native { namespace nnapi {
 
         template <class T>
         std::shared_ptr<NodeInfo> CreateOperand(std::string name,
-                                                ml::OperandType type,
+                                                wnn::OperandType type,
                                                 std::vector<T> dims,
                                                 const void* buffer = nullptr) {
             std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
@@ -205,8 +205,8 @@ namespace webnn_native { namespace nnapi {
         }
 
         MaybeError CompileImpl() override;
-        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                         NamedOutputsBase* outputs) override;
+        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                          NamedOutputsBase* outputs) override;
         // Map the input name to NNAPI internal input number.
         std::map<std::string, std::shared_ptr<NodeInfo>> mInputNameMap;
         // Map the output name to NNAPI internal original output name that will be updated after

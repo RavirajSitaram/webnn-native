@@ -151,7 +151,7 @@ namespace webnn_native { namespace nnapi {
             auto reshapeNodeDims =
                 std::vector<uint32_t>({static_cast<uint32_t>(outputDims.size())});
             auto reshapeNode =
-                CreateOperand("reshape", ml::OperandType::Int32, reshapeNodeDims, &shapeVec[0]);
+                CreateOperand("reshape", wnn::OperandType::Int32, reshapeNodeDims, &shapeVec[0]);
             DAWN_TRY(CheckForNullNode(reshapeNode, "Failed to create NNAPI operand"));
             auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
             DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
@@ -250,8 +250,8 @@ namespace webnn_native { namespace nnapi {
         return {};
     }
 
-    void getPermuteArray(ml::FilterOperandLayout srcLayout,
-                         ml::FilterOperandLayout dstLayout,
+    void getPermuteArray(wnn::Conv2dFilterOperandLayout srcLayout,
+                         wnn::Conv2dFilterOperandLayout dstLayout,
                          int* perm) {
         std::map<char, int32_t> OhwiLayout = {
             {'o', 0},
@@ -280,38 +280,38 @@ namespace webnn_native { namespace nnapi {
 
         auto getSrcLayoutIndex = [&](char c) {
             switch (srcLayout) {
-                case ml::FilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                     return OihwLayout[c];
-                case ml::FilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     return HwioLayout[c];
-                case ml::FilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     return IhwoLayout[c];
-                case ml::FilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                 default:
                     return OhwiLayout[c];
             }
         };
 
         switch (dstLayout) {
-            case ml::FilterOperandLayout::Oihw:
+            case wnn::Conv2dFilterOperandLayout::Oihw:
                 perm[0] = getSrcLayoutIndex('o');
                 perm[1] = getSrcLayoutIndex('i');
                 perm[2] = getSrcLayoutIndex('h');
                 perm[3] = getSrcLayoutIndex('w');
                 break;
-            case ml::FilterOperandLayout::Hwio:
+            case wnn::Conv2dFilterOperandLayout::Hwio:
                 perm[0] = getSrcLayoutIndex('h');
                 perm[1] = getSrcLayoutIndex('w');
                 perm[2] = getSrcLayoutIndex('i');
                 perm[3] = getSrcLayoutIndex('o');
                 break;
-            case ml::FilterOperandLayout::Ihwo:
+            case wnn::Conv2dFilterOperandLayout::Ihwo:
                 perm[0] = getSrcLayoutIndex('i');
                 perm[1] = getSrcLayoutIndex('h');
                 perm[2] = getSrcLayoutIndex('w');
                 perm[3] = getSrcLayoutIndex('o');
                 break;
-            case ml::FilterOperandLayout::Ohwi:
+            case wnn::Conv2dFilterOperandLayout::Ohwi:
                 perm[0] = getSrcLayoutIndex('o');
                 perm[1] = getSrcLayoutIndex('h');
                 perm[2] = getSrcLayoutIndex('w');
@@ -345,7 +345,7 @@ namespace webnn_native { namespace nnapi {
         int32_t filterHeight = options->windowDimensions ? options->windowDimensions[0] : 0;
         int32_t dilationWidth = options->windowDimensions ? options->dilations[1] : 0;
         int32_t dilationHeight = options->windowDimensions ? options->dilations[0] : 0;
-        int8_t layout = (options->layout == ml::InputOperandLayout::Nhwc) ? 0 : 1;
+        int8_t layout = (options->layout == wnn::InputOperandLayout::Nhwc) ? 0 : 1;
         uint32_t fuseOperation = 0;
 
         if (dilationWidth > 1 && dilationHeight > 1) {
@@ -356,7 +356,7 @@ namespace webnn_native { namespace nnapi {
         uint32_t paddingLeftWOp, paddingRightWOp, paddingTopHOp, paddingBottomHOp, strideWidthOp,
             strideHOp;
         uint32_t fuseOp, layoutOp, filterWOp, filterHOp;
-        if (options->autoPad == ml::AutoPad::Explicit) {
+        if (options->autoPad == wnn::AutoPad::Explicit) {
             DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &paddingLeft,
                                                     paddingLeftWOp));
             DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &paddingRight,
@@ -384,10 +384,10 @@ namespace webnn_native { namespace nnapi {
             DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
                                              inputList.data(), 1, &outputNode->opIndex));
         } else {
-            int32_t height = (options->layout == ml::InputOperandLayout::Nchw)
+            int32_t height = (options->layout == wnn::InputOperandLayout::Nchw)
                                  ? inputNodeInfo->dimensions[2]
                                  : inputNodeInfo->dimensions[1];
-            int32_t width = (options->layout == ml::InputOperandLayout::Nchw)
+            int32_t width = (options->layout == wnn::InputOperandLayout::Nchw)
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
@@ -435,7 +435,7 @@ namespace webnn_native { namespace nnapi {
         if (!permute)
             DAWN_ASSERT(permute != nullptr);
 
-        auto permNode = CreateOperand("", ml::OperandType::Int32,
+        auto permNode = CreateOperand("", wnn::OperandType::Int32,
                                       std::vector<uint32_t>({permuteSize}), nullptr);
         DAWN_TRY(CheckForNullNode(permNode, "Failed to create NNAPI operand"));
         DAWN_TRY(
@@ -460,11 +460,11 @@ namespace webnn_native { namespace nnapi {
 
         auto getOutputChannels = [&](std::vector<uint32_t>& filterDims) {
             switch (options->filterLayout) {
-                case ml::FilterOperandLayout::Hwio:
-                case ml::FilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     return filterDims[3];
-                case ml::FilterOperandLayout::Oihw:
-                case ml::FilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                 default:
                     return filterDims[0];
             }
@@ -472,12 +472,12 @@ namespace webnn_native { namespace nnapi {
 
         auto getFilterHeight = [&](std::vector<uint32_t>& filterDims) {
             switch (options->filterLayout) {
-                case ml::FilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     return filterDims[0];
-                case ml::FilterOperandLayout::Ihwo:
-                case ml::FilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     return filterDims[1];
-                case ml::FilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                 default:
                     return filterDims[2];
             }
@@ -485,12 +485,12 @@ namespace webnn_native { namespace nnapi {
 
         auto getFilterWidth = [&](std::vector<uint32_t>& filterDims) {
             switch (options->filterLayout) {
-                case ml::FilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     return filterDims[1];
-                case ml::FilterOperandLayout::Ihwo:
-                case ml::FilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     return filterDims[2];
-                case ml::FilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                 default:
                     return filterDims[3];
             }
@@ -498,13 +498,13 @@ namespace webnn_native { namespace nnapi {
 
         auto getFilterInChannels = [&](std::vector<uint32_t>& filterDims) {
             switch (options->filterLayout) {
-                case ml::FilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     return filterDims[2];
-                case ml::FilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     return filterDims[0];
-                case ml::FilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                     return filterDims[1];
-                case ml::FilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                 default:
                     return filterDims[3];
             }
@@ -534,20 +534,20 @@ namespace webnn_native { namespace nnapi {
         {
             if (options->groups > 1) {
                 int32_t inputChannels = 0;
-                if (options->inputLayout == ml::InputOperandLayout::Nchw)
+                if (options->inputLayout == wnn::InputOperandLayout::Nchw)
                     inputChannels = inputNodeInfo->dimensions[1];
-                else if (options->inputLayout == ml::InputOperandLayout::Nhwc)
+                else if (options->inputLayout == wnn::InputOperandLayout::Nhwc)
                     inputChannels = inputNodeInfo->dimensions[3];
 
                 if (options->groups == inputChannels) {
                     int32_t filterChannels = 0;
                     switch (options->filterLayout) {
-                        case ml::FilterOperandLayout::Oihw:
-                        case ml::FilterOperandLayout::Ohwi:
+                        case wnn::Conv2dFilterOperandLayout::Oihw:
+                        case wnn::Conv2dFilterOperandLayout::Ohwi:
                             filterChannels = static_cast<int32_t>(filterNodeInfo->dimensions[0]);
                             break;
-                        case ml::FilterOperandLayout::Hwio:
-                        case ml::FilterOperandLayout::Ihwo:
+                        case wnn::Conv2dFilterOperandLayout::Hwio:
+                        case wnn::Conv2dFilterOperandLayout::Ihwo:
                             filterChannels = static_cast<int32_t>(filterNodeInfo->dimensions[3]);
                             break;
                         default:
@@ -573,18 +573,18 @@ namespace webnn_native { namespace nnapi {
         int32_t strideHeight = options->strides ? options->strides[0] : 0;
         int32_t dilationsWidth = options->dilations ? options->dilations[1] : 0;
         int32_t dilationsHeight = options->dilations ? options->dilations[0] : 0;
-        int8_t layout = (options->inputLayout == ml::InputOperandLayout::Nhwc) ? 0 : 1;
+        int8_t layout = (options->inputLayout == wnn::InputOperandLayout::Nhwc) ? 0 : 1;
         int32_t groups = options->groups, fuseOperation = 0;
         uint32_t paddingLeftOp, paddingRightOp, paddingTopOp, paddingBottomOp, strideWeightOp,
             strideHeightOp;
         uint32_t fuseOp = 0, layoutOp = 0, dilationsWidthOp = 0, dilationsHeightOp = 0,
                  groupsOp = 0;
 
-        if (options->autoPad != ml::AutoPad::Explicit) {
-            int32_t height = (options->inputLayout == ml::InputOperandLayout::Nchw)
+        if (options->autoPad != wnn::AutoPad::Explicit) {
+            int32_t height = (options->inputLayout == wnn::InputOperandLayout::Nchw)
                                  ? inputNodeInfo->dimensions[2]
                                  : inputNodeInfo->dimensions[1];
-            int32_t width = (options->inputLayout == ml::InputOperandLayout::Nchw)
+            int32_t width = (options->inputLayout == wnn::InputOperandLayout::Nchw)
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
@@ -626,7 +626,7 @@ namespace webnn_native { namespace nnapi {
         if (isGroupConvolution) {
             memInt32Vec.emplace_back(new int(4));
             int32_t* permute = memInt32Vec.back().get();
-            getPermuteArray(options->filterLayout, ml::FilterOperandLayout::Ohwi, permute);
+            getPermuteArray(options->filterLayout, wnn::Conv2dFilterOperandLayout::Ohwi, permute);
             DAWN_TRY(AddTransposeImpl(filterNodeInfo, permute, 4, transposeFilterIndex));
             DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &groups, groupsOp));
             std::vector<uint32_t> inputList = {inputOpIndex,    transposeFilterIndex,
@@ -642,7 +642,7 @@ namespace webnn_native { namespace nnapi {
             groups = 1;
             memInt32Vec.emplace_back(new int(4));
             int32_t* permute = memInt32Vec.back().get();
-            getPermuteArray(options->filterLayout, ml::FilterOperandLayout::Ihwo, permute);
+            getPermuteArray(options->filterLayout, wnn::Conv2dFilterOperandLayout::Ihwo, permute);
             DAWN_TRY(AddTransposeImpl(filterNodeInfo, permute, 4, transposeFilterIndex));
             DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &groups, groupsOp));
             std::vector<uint32_t> inputList = {inputOpIndex,     transposeFilterIndex,
@@ -658,7 +658,7 @@ namespace webnn_native { namespace nnapi {
         } else {
             memInt32Vec.emplace_back(new int(4));
             int32_t* permute = memInt32Vec.back().get();
-            getPermuteArray(options->filterLayout, ml::FilterOperandLayout::Ohwi, permute);
+            getPermuteArray(options->filterLayout, wnn::Conv2dFilterOperandLayout::Ohwi, permute);
             DAWN_TRY(AddTransposeImpl(filterNodeInfo, permute, 4, transposeFilterIndex));
             std::vector<uint32_t> inputList = {inputOpIndex,     transposeFilterIndex,
                                                biasOpIndex,      paddingLeftOp,
@@ -762,7 +762,7 @@ namespace webnn_native { namespace nnapi {
         auto inputOpIndex = mGraphNodeMap[reshape->Inputs()[0].Get()];
         auto inputNodeInfo = mIndexNodeMap[inputOpIndex];
         std::vector<uint32_t> newShapeDims = {static_cast<uint32_t>(reshape->GetNewShape().size())};
-        auto newShapeNode = CreateOperand("const", ml::OperandType::Int32, newShapeDims,
+        auto newShapeNode = CreateOperand("const", wnn::OperandType::Int32, newShapeDims,
                                           reshape->GetNewShape().data());
         DAWN_TRY(CheckForNullNode(newShapeNode, "Failed to create NNAPI operand"));
         auto dimensions = reshape->PrimaryOutput()->Shape();
@@ -822,9 +822,9 @@ namespace webnn_native { namespace nnapi {
                                   mGraphOutputs.data());
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        if (mNnapiMgr->InitExecutionContext() != MLComputeGraphStatus_Success)
-            return MLComputeGraphStatus_Error;
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        if (mNnapiMgr->InitExecutionContext() != WNNComputeGraphStatus_Success)
+            return WNNComputeGraphStatus_Error;
 
         int fd;
         ANeuralNetworksMemory* mem;
@@ -833,7 +833,7 @@ namespace webnn_native { namespace nnapi {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input isn't set";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
 
             auto nodeInfo = input.second;
@@ -845,10 +845,10 @@ namespace webnn_native { namespace nnapi {
 
             if (index == mGraphInputs.size()) {
                 dawn::ErrorLog() << "Failed to find the input node in nodeinfo";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
 
-            auto& resource = namedInputs[input.first]->resource;
+            auto& resource = namedInputs[input.first].resource;
             mNnapiMgr->getFdNNMemory(nodeInfo->opIndex, fd, mem);
             void* inputTensorPtr = reinterpret_cast<void*>(
                 mmap(nullptr, resource.byteLength, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
@@ -859,7 +859,7 @@ namespace webnn_native { namespace nnapi {
             int32_t status = mNnapiMgr->SetInputMemory(index, nullptr, mem, 0, resource.byteLength);
             if (status != ANEURALNETWORKS_NO_ERROR) {
                 dawn::ErrorLog() << "Failed ANeuralNetworksExecution_setInputFromMemory";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
         }
 
@@ -869,7 +869,7 @@ namespace webnn_native { namespace nnapi {
             // All the inputs must be set.
             if (namedOutputs.find(output.first) == namedOutputs.end()) {
                 dawn::ErrorLog() << "The output isn't set";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
 
             size_t index = 0;
@@ -880,41 +880,41 @@ namespace webnn_native { namespace nnapi {
 
             if (index == mGraphOutputs.size()) {
                 dawn::ErrorLog() << "Failed to find the output node in nodeinfo";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             mNnapiMgr->getFdNNMemory(nodeInfo->opIndex, fd, mem);
-            const ArrayBufferView* outputBuffer = namedOutputs[output.first];
+            ArrayBufferView outputBuffer = namedOutputs[output.first];
             int32_t status =
-                mNnapiMgr->SetOutputMemory(index, nullptr, mem, 0, outputBuffer->byteLength);
+                mNnapiMgr->SetOutputMemory(index, nullptr, mem, 0, outputBuffer.byteLength);
             if (status != ANEURALNETWORKS_NO_ERROR) {
                 dawn::ErrorLog() << "Failed ANeuralNetworksExecution_setOutputFromMemory";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
         }
 
-        if (mNnapiMgr->ComputeAndWait() != MLComputeGraphStatus_Success) {
-            return MLComputeGraphStatus_Error;
+        if (mNnapiMgr->ComputeAndWait() != WNNComputeGraphStatus_Success) {
+            return WNNComputeGraphStatus_Error;
         }
 
         for (auto namedOutput : outputs->GetRecords()) {
-            const ArrayBufferView* output = namedOutput.second;
-            DAWN_ASSERT(output->buffer != nullptr && output->byteLength != 0);
+            ArrayBufferView output = namedOutput.second;
+            DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
             auto nodeInfo = mOutputNameMap[namedOutput.first];
             mNnapiMgr->getFdNNMemory(nodeInfo->opIndex, fd, mem);
             float* outputTensorPtr = reinterpret_cast<float*>(
-                mmap(nullptr, output->byteLength, PROT_READ, MAP_SHARED, fd, 0));
+                mmap(nullptr, output.byteLength, PROT_READ, MAP_SHARED, fd, 0));
             if (outputTensorPtr == MAP_FAILED) {
                 dawn::ErrorLog() << "Failed to mmap output buffer";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
 
-            std::memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset, outputTensorPtr,
-                        output->byteLength);
+            std::memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset, outputTensorPtr,
+                        output.byteLength);
 
-            munmap(outputTensorPtr, output->byteLength);
+            munmap(outputTensorPtr, output.byteLength);
         }
 
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 }}  // namespace webnn_native::nnapi

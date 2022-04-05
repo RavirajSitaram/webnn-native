@@ -80,8 +80,8 @@ namespace webnn_native { namespace nnapi {
                            const uint32_t* inputs,
                            uint32_t outputCount,
                            const uint32_t* outputs);
-        MLComputeGraphStatus ComputeAndWait();
-        MLComputeGraphStatus InitExecutionContext();
+        WNNComputeGraphStatus ComputeAndWait();
+        WNNComputeGraphStatus InitExecutionContext();
         void getFdNNMemory(uint32_t index, int& fd, ANeuralNetworksMemory*& mem) {
             fd = mFdMemMap[index].fd;
             mem = mFdMemMap[index].mem;
