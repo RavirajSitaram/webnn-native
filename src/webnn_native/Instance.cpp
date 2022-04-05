@@ -58,7 +58,6 @@ namespace webnn_native {
         BackendConnection* Connect(InstanceBase* instance);
     }
 #endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
->>>>>>> Add Backend class for Nnapi
 
     namespace {
 
