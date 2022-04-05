@@ -18,7 +18,8 @@
 
 namespace webnn_native { namespace nnapi {
 
-    Backend::Backend(InstanceBase* instance) : BackendConnection(instance, ml::BackendType::Nnapi) {
+    Backend::Backend(InstanceBase* instance)
+        : BackendConnection(instance, wnn::BackendType::Nnapi) {
     }
 
     MaybeError Backend::Initialize() {

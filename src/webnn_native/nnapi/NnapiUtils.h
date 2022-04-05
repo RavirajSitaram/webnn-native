@@ -31,7 +31,7 @@
 namespace webnn_native { namespace nnapi {
 
     struct NodeInfo {
-        ml::OperandType type;
+        wnn::OperandType type;
         std::vector<uint32_t> dimensions;
         std::string name;
         uint32_t opIndex;
@@ -48,12 +48,12 @@ namespace webnn_native { namespace nnapi {
             size_t count = std::accumulate(std::begin(dimensions), std::end(dimensions), 1,
                                            std::multiplies<size_t>());
             switch (type) {
-                case ml::OperandType::Float32:
-                case ml::OperandType::Uint32:
-                case ml::OperandType::Int32:
+                case wnn::OperandType::Float32:
+                case wnn::OperandType::Uint32:
+                case wnn::OperandType::Int32:
                     count *= 4;
                     break;
-                case ml::OperandType::Float16:
+                case wnn::OperandType::Float16:
                     count *= 2;
                     break;
                 default:
@@ -63,19 +63,19 @@ namespace webnn_native { namespace nnapi {
         }
     };
 
-    inline int32_t ConvertToNnapiType(ml::OperandType type) {
+    inline int32_t ConvertToNnapiType(wnn::OperandType type) {
         int32_t nnapiType;
         switch (type) {
-            case ml::OperandType::Float32:
+            case wnn::OperandType::Float32:
                 nnapiType = ANEURALNETWORKS_TENSOR_FLOAT32;
                 break;
-            case ml::OperandType::Int32:
+            case wnn::OperandType::Int32:
                 nnapiType = ANEURALNETWORKS_TENSOR_INT32;
                 break;
-            case ml::OperandType::Float16:
+            case wnn::OperandType::Float16:
                 nnapiType = ANEURALNETWORKS_TENSOR_FLOAT16;
                 break;
-            case ml::OperandType::Uint32:
+            case wnn::OperandType::Uint32:
                 nnapiType = ANEURALNETWORKS_UINT32;
                 break;
             default:
@@ -85,8 +85,8 @@ namespace webnn_native { namespace nnapi {
     }
 
     inline MaybeError GetTensorDesc(const std::shared_ptr<NodeInfo>& node,
-                              ANeuralNetworksOperandType& tensorType) {
-        if (node->dimensions.size() == 0 )
+                                    ANeuralNetworksOperandType& tensorType) {
+        if (node->dimensions.size() == 0)
             return DAWN_INTERNAL_ERROR("Invalid dimensions !!");
 
         tensorType.dimensions = &(node->dimensions[0]);

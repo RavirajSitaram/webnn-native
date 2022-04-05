@@ -238,30 +238,30 @@ namespace webnn_native { namespace nnapi {
         return {};
     }
 
-    MLComputeGraphStatus NnapiManager::InitExecutionContext() {
+    WNNComputeGraphStatus NnapiManager::InitExecutionContext() {
         int32_t status = mNnapi->ANeuralNetworksExecution_create(mNnCompilation, &mNnExecution);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 
-    MLComputeGraphStatus NnapiManager::ComputeAndWait() {
+    WNNComputeGraphStatus NnapiManager::ComputeAndWait() {
         ANeuralNetworksEvent* event = nullptr;
         int32_t status = mNnapi->ANeuralNetworksExecution_startCompute(mNnExecution, &event);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
         status = mNnapi->ANeuralNetworksEvent_wait(event);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
         mNnapi->ANeuralNetworksEvent_free(event);
         mNnapi->ANeuralNetworksExecution_free(mNnExecution);
 
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 }}  // namespace webnn_native::nnapi
