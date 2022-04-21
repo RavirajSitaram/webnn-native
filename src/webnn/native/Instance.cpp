@@ -63,6 +63,11 @@ namespace webnn::native {
         BackendConnection* Connect(InstanceBase* instance);
     }
 #endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
+#if defined(WEBNN_ENABLE_BACKEND_XNNPACK)
+    namespace xnnpack {
+        BackendConnection* Connect(InstanceBase* instance);
+    }
+#endif  // defined(WEBNN_ENABLE_BACKEND_XNNPACK)
 
     namespace {
 
@@ -89,6 +94,9 @@ namespace webnn::native {
 #if defined(WEBNN_ENABLE_BACKEND_NNAPI)
             enabledBackends.set(wnn::BackendType::NNAPI);
 #endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
+#if defined(WEBNN_ENABLE_BACKEND_XNNPACK)
+            enabledBackends.set(wnn::BackendType::XNNPACK);
+#endif  // defined(WEBNN_ENABLE_BACKEND_XNNPACK)
             return enabledBackends;
         }
 
