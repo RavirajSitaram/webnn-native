@@ -22,7 +22,7 @@
 
 namespace webnn_native { namespace nnapi {
 
-    NnapiManager::NnapiManager() : operandIndex(0) {
+    NnapiManager::NnapiManager() : mOperandIndex(0) {
         mNnapi = NnApiImplementation();
 
         // TODO: Move this code
@@ -238,30 +238,30 @@ namespace webnn_native { namespace nnapi {
         return {};
     }
 
-    WNNComputeGraphStatus NnapiManager::InitExecutionContext() {
+    NNAPIComputeGraphStatus NnapiManager::InitExecutionContext() {
         int32_t status = mNnapi->ANeuralNetworksExecution_create(mNnCompilation, &mNnExecution);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return WNNComputeGraphStatus_Error;
+            return NNAPIComputeGraphStatus_Error;
         }
 
-        return WNNComputeGraphStatus_Success;
+        return NNAPIComputeGraphStatus_Success;
     }
 
-    WNNComputeGraphStatus NnapiManager::ComputeAndWait() {
+    NNAPIComputeGraphStatus NnapiManager::ComputeAndWait() {
         ANeuralNetworksEvent* event = nullptr;
         int32_t status = mNnapi->ANeuralNetworksExecution_startCompute(mNnExecution, &event);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return WNNComputeGraphStatus_Error;
+            return NNAPIComputeGraphStatus_Error;
         }
 
         status = mNnapi->ANeuralNetworksEvent_wait(event);
         if (status != ANEURALNETWORKS_NO_ERROR) {
-            return WNNComputeGraphStatus_Error;
+            return NNAPIComputeGraphStatus_Error;
         }
 
         mNnapi->ANeuralNetworksEvent_free(event);
         mNnapi->ANeuralNetworksExecution_free(mNnExecution);
 
-        return WNNComputeGraphStatus_Success;
+        return NNAPIComputeGraphStatus_Success;
     }
 }}  // namespace webnn_native::nnapi

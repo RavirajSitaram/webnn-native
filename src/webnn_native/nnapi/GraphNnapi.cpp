@@ -58,10 +58,10 @@ namespace webnn_native { namespace nnapi {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(const std::string_view name, const OperandBase* output) {
         uint32_t index = mGraphNodeMap[output];
         auto node = mIndexNodeMap[index];
-        auto outputNode = CreateIOOperand(name, node, false);
+        auto outputNode = CreateIOOperand(name.data(), node, false);
         DAWN_TRY(CheckForNullNode(outputNode, "Failed to create Input operand"));
         return {};
     }
@@ -822,9 +822,9 @@ namespace webnn_native { namespace nnapi {
                                   mGraphOutputs.data());
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        if (mNnapiMgr->InitExecutionContext() != WNNComputeGraphStatus_Success)
-            return WNNComputeGraphStatus_Error;
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        if (mNnapiMgr->InitExecutionContext() != NNAPIComputeGraphStatus_Success)
+            return DAWN_INTERNAL_ERROR("failed to build graph!");
 
         int fd;
         ANeuralNetworksMemory* mem;
@@ -832,8 +832,7 @@ namespace webnn_native { namespace nnapi {
         for (auto& input : mInputNameMap) {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
-                dawn::ErrorLog() << "The input isn't set";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("The input isn't set");
             }
 
             auto nodeInfo = input.second;
@@ -844,22 +843,24 @@ namespace webnn_native { namespace nnapi {
             }
 
             if (index == mGraphInputs.size()) {
-                dawn::ErrorLog() << "Failed to find the input node in nodeinfo";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("Failed to find the input node in nodeinfo");
             }
 
             auto& resource = namedInputs[input.first].resource;
+            auto& arrayBuffer = resource.arrayBufferView;
             mNnapiMgr->getFdNNMemory(nodeInfo->opIndex, fd, mem);
             void* inputTensorPtr = reinterpret_cast<void*>(
-                mmap(nullptr, resource.byteLength, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
-            std::memcpy(inputTensorPtr, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
-                        resource.byteLength);
-            munmap(inputTensorPtr, resource.byteLength);
+                mmap(nullptr, arrayBuffer.byteLength, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0));
+            std::memcpy(inputTensorPtr,
+                        static_cast<int8_t*>(arrayBuffer.buffer) + arrayBuffer.byteOffset,
+                        arrayBuffer.byteLength);
+            munmap(inputTensorPtr, arrayBuffer.byteLength);
 
-            int32_t status = mNnapiMgr->SetInputMemory(index, nullptr, mem, 0, resource.byteLength);
+            int32_t status =
+                mNnapiMgr->SetInputMemory(index, nullptr, mem, 0, arrayBuffer.byteLength);
             if (status != ANEURALNETWORKS_NO_ERROR) {
                 dawn::ErrorLog() << "Failed ANeuralNetworksExecution_setInputFromMemory";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("Failed ANeuralNetworksExecution_setInputFromMemory");
             }
         }
 
@@ -868,8 +869,7 @@ namespace webnn_native { namespace nnapi {
             auto nodeInfo = mOutputNameMap[output.first];
             // All the inputs must be set.
             if (namedOutputs.find(output.first) == namedOutputs.end()) {
-                dawn::ErrorLog() << "The output isn't set";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("The output isn't set");
             }
 
             size_t index = 0;
@@ -879,25 +879,23 @@ namespace webnn_native { namespace nnapi {
             }
 
             if (index == mGraphOutputs.size()) {
-                dawn::ErrorLog() << "Failed to find the output node in nodeinfo";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("Failed to find the output node in nodeinfo");
             }
             mNnapiMgr->getFdNNMemory(nodeInfo->opIndex, fd, mem);
-            ArrayBufferView outputBuffer = namedOutputs[output.first];
+            ArrayBufferView outputBuffer = namedOutputs[output.first].arrayBufferView;
             int32_t status =
                 mNnapiMgr->SetOutputMemory(index, nullptr, mem, 0, outputBuffer.byteLength);
             if (status != ANEURALNETWORKS_NO_ERROR) {
-                dawn::ErrorLog() << "Failed ANeuralNetworksExecution_setOutputFromMemory";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("Failed ANeuralNetworksExecution_setOutputFromMemory");
             }
         }
 
-        if (mNnapiMgr->ComputeAndWait() != WNNComputeGraphStatus_Success) {
-            return WNNComputeGraphStatus_Error;
+        if (mNnapiMgr->ComputeAndWait() != NNAPIComputeGraphStatus_Success) {
+            return DAWN_INTERNAL_ERROR("failed to build graph!");
         }
 
         for (auto namedOutput : outputs->GetRecords()) {
-            ArrayBufferView output = namedOutput.second;
+            ArrayBufferView output = namedOutput.second.arrayBufferView;
             DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
             auto nodeInfo = mOutputNameMap[namedOutput.first];
@@ -906,7 +904,7 @@ namespace webnn_native { namespace nnapi {
                 mmap(nullptr, output.byteLength, PROT_READ, MAP_SHARED, fd, 0));
             if (outputTensorPtr == MAP_FAILED) {
                 dawn::ErrorLog() << "Failed to mmap output buffer";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("Failed to mmap output buffer");
             }
 
             std::memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset, outputTensorPtr,
@@ -915,6 +913,6 @@ namespace webnn_native { namespace nnapi {
             munmap(outputTensorPtr, output.byteLength);
         }
 
-        return WNNComputeGraphStatus_Success;
+        return {};
     }
 }}  // namespace webnn_native::nnapi
