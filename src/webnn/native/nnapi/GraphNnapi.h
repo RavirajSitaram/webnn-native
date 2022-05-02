@@ -61,7 +61,8 @@ namespace webnn_native { namespace nnapi {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* ouput) override;
+        virtual MaybeError AddOutput(const std::string_view name,
+                                     const OperandBase* ouput) override;
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
@@ -205,8 +206,7 @@ namespace webnn_native { namespace nnapi {
         }
 
         MaybeError CompileImpl() override;
-        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                          NamedOutputsBase* outputs) override;
+        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
         // Map the input name to NNAPI internal input number.
         std::map<std::string, std::shared_ptr<NodeInfo>> mInputNameMap;
         // Map the output name to NNAPI internal original output name that will be updated after
