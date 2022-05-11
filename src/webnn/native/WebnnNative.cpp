@@ -79,9 +79,6 @@ namespace webnn::native {
     namespace nnapi {
         ContextBase* Create();
     }
-    namespace nnapi {
-        ContextBase* Create(MLContextOptions const* options);
-    }
 
     const WebnnProcTable& GetProcsAutogen();
 
