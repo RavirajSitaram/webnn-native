@@ -15,22 +15,28 @@
 #ifndef WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_
 #define WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_
 
-#include "webnn_native/BackendConnection.h"
-#include "webnn_native/Context.h"
-#include "webnn_native/Error.h"
+#include "webnn/native/BackendConnection.h"
+#include "webnn/native/Context.h"
+#include "webnn/native/Error.h"
+
+#include <xnnpack.h>
 
 #include <memory>
 
-namespace webnn_native::xnnpack {
+namespace webnn::native::xnnpack {
 
     class Backend : public BackendConnection {
       public:
         Backend(InstanceBase* instance);
+        virtual ~Backend() override;
 
         MaybeError Initialize();
         ContextBase* CreateContext(ContextOptions const* options = nullptr) override;
+
+      private:
+        pthreadpool_t mThreadpool;
     };
 
-}  // namespace webnn_native::xnnpack
+}  // namespace webnn::native::xnnpack
 
 #endif  // WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_

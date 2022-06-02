@@ -20,7 +20,6 @@
 
 #include <thread>
 
-
 namespace webnn::native::xnnpack {
 
     Backend::Backend(InstanceBase* instance)

@@ -19,16 +19,16 @@
 #include <limits>
 #include <numeric>
 
-#include "webnn_native/Error.h"
-#include "webnn_native/Graph.h"
-#include "webnn_native/Operand.h"
-#include "webnn_native/Operator.h"
+#include "webnn/native/Error.h"
+#include "webnn/native/Graph.h"
+#include "webnn/native/Operand.h"
+#include "webnn/native/Operator.h"
 
 #include "NeuralNetworksTypes.h"
 #include "nnapi_implementation.h"
-#include "webnn_native/nnapi/ErrorNnapi.h"
+#include "webnn/native/nnapi/ErrorNnapi.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
 
     struct NodeInfo {
         wnn::OperandType type;
@@ -97,6 +97,6 @@ namespace webnn_native { namespace nnapi {
 
         return {};
     }
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif

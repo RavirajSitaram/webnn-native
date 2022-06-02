@@ -15,9 +15,9 @@
 #ifndef WEBNN_NATIVE_NNAPI_ERROR_NN_H_
 #define WEBNN_NATIVE_NNAPI_ERROR_NN_H_
 
-#include "webnn_native/Error.h"
+#include "webnn/native/Error.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
     struct NodeInfo;
 
     MaybeError CheckStatusCodeImpl(int32_t code, const char* context);
@@ -26,6 +26,6 @@ namespace webnn_native { namespace nnapi {
 #define CheckStatusCode(code, context) CheckStatusCodeImpl(code, context)
 #define CheckForNullNode(ptr, context) CheckForNullNodeImpl(ptr, context)
 
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NNAPI_ERROR_NN_H_

@@ -20,39 +20,39 @@
 #include <unordered_set>
 #include <vector>
 
-#include "webnn_native/Error.h"
-#include "webnn_native/Graph.h"
-#include "webnn_native/Operand.h"
-#include "webnn_native/Operator.h"
-#include "webnn_native/nnapi/ContextNnapi.h"
-#include "webnn_native/ops/BatchNorm.h"
-#include "webnn_native/ops/Binary.h"
-#include "webnn_native/ops/Clamp.h"
-#include "webnn_native/ops/Concat.h"
-#include "webnn_native/ops/Constant.h"
-#include "webnn_native/ops/Conv2d.h"
-#include "webnn_native/ops/Gemm.h"
-#include "webnn_native/ops/Input.h"
-#include "webnn_native/ops/InstanceNorm.h"
-#include "webnn_native/ops/LeakyRelu.h"
-#include "webnn_native/ops/Pad.h"
-#include "webnn_native/ops/Pool2d.h"
-#include "webnn_native/ops/Reduce.h"
-#include "webnn_native/ops/Resample2d.h"
-#include "webnn_native/ops/Reshape.h"
-#include "webnn_native/ops/Slice.h"
-#include "webnn_native/ops/Split.h"
-#include "webnn_native/ops/Squeeze.h"
-#include "webnn_native/ops/Transpose.h"
-#include "webnn_native/ops/Unary.h"
+#include "webnn/native/Error.h"
+#include "webnn/native/Graph.h"
+#include "webnn/native/Operand.h"
+#include "webnn/native/Operator.h"
+#include "webnn/native/nnapi/ContextNnapi.h"
+#include "webnn/native/ops/BatchNorm.h"
+#include "webnn/native/ops/Binary.h"
+#include "webnn/native/ops/Clamp.h"
+#include "webnn/native/ops/Concat.h"
+#include "webnn/native/ops/Constant.h"
+#include "webnn/native/ops/Conv2d.h"
+#include "webnn/native/ops/Gemm.h"
+#include "webnn/native/ops/Input.h"
+#include "webnn/native/ops/InstanceNorm.h"
+#include "webnn/native/ops/LeakyRelu.h"
+#include "webnn/native/ops/Pad.h"
+#include "webnn/native/ops/Pool2d.h"
+#include "webnn/native/ops/Reduce.h"
+#include "webnn/native/ops/Resample2d.h"
+#include "webnn/native/ops/Reshape.h"
+#include "webnn/native/ops/Slice.h"
+#include "webnn/native/ops/Split.h"
+#include "webnn/native/ops/Squeeze.h"
+#include "webnn/native/ops/Transpose.h"
+#include "webnn/native/ops/Unary.h"
 
 #include "NeuralNetworksTypes.h"
 #include "NnapiManager.h"
 #include "NnapiUtils.h"
 #include "nnapi_implementation.h"
-#include "webnn_native/nnapi/ErrorNnapi.h"
+#include "webnn/native/nnapi/ErrorNnapi.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
 
     class Graph : public GraphBase {
       public:
@@ -230,6 +230,6 @@ namespace webnn_native { namespace nnapi {
         std::vector<std::unique_ptr<int32_t>> memInt32Vec;
     };
 
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NNAPI_MODEL_NN_H_

@@ -25,10 +25,10 @@
 #include "NeuralNetworksTypes.h"
 #include "NnapiUtils.h"
 #include "nnapi_implementation.h"
-#include "webnn_native/Error.h"
-#include "webnn_native/nnapi/ErrorNnapi.h"
+#include "webnn/native/Error.h"
+#include "webnn/native/nnapi/ErrorNnapi.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
 
     struct FdMem {
         int fd;
@@ -104,6 +104,6 @@ namespace webnn_native { namespace nnapi {
         ANeuralNetworksOperandType mInt32Operand, mBoolOperand, mFloat32Operand;
         std::map<uint32_t, struct FdMem> mFdMemMap;
     };
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NN_MANAGER_H_

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/nnapi/GraphNnapi.h"
+#include "webnn/native/nnapi/GraphNnapi.h"
 
 #include <errno.h>
 #include <sys/mman.h>
@@ -26,13 +26,13 @@
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "nnapi_implementation.h"
-#include "webnn_native/ErrorData.h"
-#include "webnn_native/NamedInputs.h"
-#include "webnn_native/NamedOperands.h"
-#include "webnn_native/NamedOutputs.h"
-#include "webnn_native/Utils.h"
+#include "webnn/native/ErrorData.h"
+#include "webnn/native/NamedInputs.h"
+#include "webnn/native/NamedOperands.h"
+#include "webnn/native/NamedOutputs.h"
+#include "webnn/native/Utils.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
 
     Graph::Graph(Context* context) : GraphBase(context), mOperandCount(0) {
         mNnapiMgr = std::make_shared<NnapiManager>();
@@ -657,10 +657,10 @@ namespace webnn_native { namespace nnapi {
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0], height,
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[0], height,
                                                     filterHeight, options->strides[0], paddingTop,
                                                     paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1], width,
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[1], width,
                                                     filterWidth, options->strides[1], paddingLeft,
                                                     paddingRight);
 
@@ -871,10 +871,10 @@ namespace webnn_native { namespace nnapi {
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0], height,
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[0], height,
                                                     getFilterHeight(filterNodeInfo->dimensions),
                                                     options->strides[0], paddingTop, paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1], width,
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[1], width,
                                                     getFilterWidth(filterNodeInfo->dimensions),
                                                     options->strides[1], paddingLeft, paddingRight);
         }
@@ -1307,4 +1307,4 @@ namespace webnn_native { namespace nnapi {
 
         return {};
     }
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi

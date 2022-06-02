@@ -20,7 +20,7 @@
 #include "NnapiManager.h"
 #include "common/Assert.h"
 
-namespace webnn_native { namespace nnapi {
+namespace webnn::native { namespace nnapi {
 
     NnapiManager::NnapiManager() : mOperandIndex(0) {
         mNnapi = NnApiImplementation();
@@ -264,4 +264,4 @@ namespace webnn_native { namespace nnapi {
 
         return NNAPIComputeGraphStatus_Success;
     }
-}}  // namespace webnn_native::nnapi
+}}  // namespace webnn::native::nnapi
