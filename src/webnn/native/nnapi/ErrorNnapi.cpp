@@ -17,7 +17,7 @@
 #include <string>
 #include "NeuralNetworksTypes.h"
 
-namespace webnn::native::nnapi {
+namespace webnn::native { namespace nnapi {
 
     MaybeError CheckStatusCodeImpl(int32_t code, const char* context) {
         std::ostringstream errorMessage;
@@ -38,4 +38,4 @@ namespace webnn::native::nnapi {
         return {};
     }
 
-} // namespace webnn::native::nnapi
+}}  // namespace webnn::native::nnapi

@@ -37,6 +37,6 @@ namespace webnn::native::xnnpack {
         pthreadpool_t mThreadpool;
     };
 
-}  // namespace webnn/native::xnnpack
+}  // namespace webnn::native::xnnpack
 
 #endif  // WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_

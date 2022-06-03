@@ -28,7 +28,7 @@
 #include "nnapi_implementation.h"
 #include "webnn/native/nnapi/ErrorNnapi.h"
 
-namespace webnn::native::nnapi {
+namespace webnn::native { namespace nnapi {
 
     struct NodeInfo {
         wnn::OperandType type;
@@ -97,6 +97,6 @@ namespace webnn::native::nnapi {
 
         return {};
     }
-} // namespace webnn::native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif

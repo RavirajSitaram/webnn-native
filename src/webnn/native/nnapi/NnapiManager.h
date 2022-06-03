@@ -28,7 +28,7 @@
 #include "webnn/native/Error.h"
 #include "webnn/native/nnapi/ErrorNnapi.h"
 
-namespace webnn::native::nnapi {
+namespace webnn::native { namespace nnapi {
 
     struct FdMem {
         int fd;
@@ -104,6 +104,6 @@ namespace webnn::native::nnapi {
         ANeuralNetworksOperandType mInt32Operand, mBoolOperand, mFloat32Operand;
         std::map<uint32_t, struct FdMem> mFdMemMap;
     };
-}  // namespace webnn::native::nnapi
+}}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NN_MANAGER_H_

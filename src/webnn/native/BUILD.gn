@@ -209,7 +209,7 @@ source_set("sources") {
           "`is_component_build=false` must be set for OpenVINO backend on Linux.")
     }
   }
-
+  
   if (webnn_enable_dmlx) {
     if (webnn_enable_gpu_buffer == false) {
       sources += [

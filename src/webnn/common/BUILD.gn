@@ -69,6 +69,10 @@ config("internal_config") {
     defines += [ "WEBNN_ENABLE_BACKEND_NULL" ]
   }
 
+  if (webnn_enable_nnapi) {
+    defines += [ "WEBNN_ENABLE_BACKEND_NNAPI" ]
+  }
+
   if (webnn_enable_openvino) {
     defines += [ "WEBNN_ENABLE_BACKEND_OPENVINO" ]
   }

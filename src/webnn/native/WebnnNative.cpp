@@ -31,7 +31,7 @@ namespace webnn::native {
     namespace {
 
         void DumpMemoryLeaks() {
-#if defined(_WIN32) && defined(_DEBUG)
+#if 0
             // Send all reports to STDOUT.
             _CrtSetReportMode(_CRT_WARN, _CRTDBG_MODE_FILE);
             _CrtSetReportFile(_CRT_WARN, _CRTDBG_FILE_STDOUT);
@@ -74,6 +74,9 @@ namespace webnn::native {
         return reinterpret_cast<WNNInstanceImpl*>(mImpl);
     }
     namespace mlas {
+        ContextBase* Create();
+    }
+    namespace nnapi {
         ContextBase* Create();
     }
 
